@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+  <style>
+    html { font-family:  Optima, Candara, 'Noto Sans', source-sans-pro, sans-serif; }
+  </style>    
+  <div id="clock"></div>
+  <script>
+    function updateClock() {
+      const clockElement = document.getElementById('clock');
+      const now = new Date();
+      clockElement.textContent = `The time is currently ${now.toLocaleString()}`;
+    }
+
+    // Update the clock every second
+    setInterval(updateClock, 1000);
+
+    // Initial call to display the clock immediately
+    updateClock();
+  </script>
+</body>
+</html>

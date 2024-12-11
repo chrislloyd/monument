@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<title>Monument</title>
+<style>
+html { font-family:  Optima, Candara, 'Noto Sans', source-sans-pro, sans-serif; }
+table { table-layout: fixed; width: 100%; border-collapse: collapse; background-color:aliceblue; }
+td { border: 1px solid lightblue; padding: 4px; }
+textarea { display: block; width: 100%; height: 5em; font-size: inherit; font-family: inherit; }
+button { font-size: inherit; font-family: inherit; }
+</style>
+
+
+
+<span style="font-weight: bold;">monument</span>
+<button id="ask">ask</button>
+
+<hr />
+
+<div id="context" />
+
+
+<script>
+  const context = [
+    {element: "iframe", attributes: {id: "iframe", src: "clock.html", height: 200, width: 200}}
+  ];
+
+  function render() {
+    const root = document.getElementById('context');
+    root.innerHTML = '';
+    for (const item of context) {
+      if (typeof item === 'string') {
+        const el = document.createElement('div');
+        el.textContent = item;
+        root.appendChild(el);
+        continue;
+      }
+      const el = document.createElement(item.element);
+      for (const [key, value] of Object.entries(item.attributes)) {
+        el.setAttribute(key, value);
+      }
+      root.appendChild(el);
+    }
+  }
+
+  render();
+
+
+  function remember(message) {
+    let value = localStorage.getItem(message);
+    if (value) {
+      return value;
+    }
+    value = globalThis.prompt(message);
+    localStorage.setItem(message, value);
+    return value;
+  }
+
+  async function openai(path, params) {
+    const apiKey = remember('What is your OpenAI key?');
+    const response = await fetch(`https://api.openai.com/${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(params)
+    });
+    const data = await response.json();
+    return data;
+  }
+
+  async function completion(messages) {
+    return await openai('v1/chat/completions', {
+      model: "gpt-4o",
+      messages,
+    });
+  }
+
+  async function gatherContext() {
+    const messages = [];
+    for (const child of document.getElementById('context').children) {
+      if (child.tagName === 'IFRAME') {
+        // wait for the iframe to load
+        await new Promise((resolve) => {
+          child.onload = resolve;
+        });
+        const time = child.contentDocument.getElementById('clock').textContent;
+        messages.push({role: 'system', content: time});
+        continue;
+      }
+      messages.push({role: 'user', content: child.textContent});
+    }
+    return messages;
+  }
+
+
+  async function ask(message) {
+      context.push(message);
+      render();
+      
+      const messages = await gatherContext();
+      const response = await completion(messages);
+      context.push(response.choices[0].message.content);
+      render();
+  }
+
+
+  document.getElementById('ask').addEventListener('click', async (event) => {
+    const input = prompt('ask');
+    if (!input) {
+      return;
+    }
+    event.target.style.color = '';
+    event.target.disabled = true;
+    try {
+      await ask(input);
+    } catch(e) {
+      event.target.style.color = 'red';
+      throw e;
+    } finally {
+      event.target.disabled = false;
+    }
+  });
+</script>
+
+</html>
