@@ -9,8 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@lexical/markdown": "^0.21.0",
+    "@lexical/react": "^0.21.0",
+    "@lexical/rich-text": "^0.21.0",
     "@tanstack/react-query": "^5.62.7",
     "@uidotdev/usehooks": "^2.4.1",
+    "lexical": "^0.21.0",
     "next": "15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
