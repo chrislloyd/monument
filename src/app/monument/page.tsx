@@ -24,11 +24,14 @@ export default function Page() {
     setDocument(e.target.value);
   }, [setDocument]);
 
-  return <div className="grid box-border h-screen grid-cols-2">
-    <div className="h-full">
-      <textarea className="w-full h-full p-4 bg-neutral-50 border-none box-border font-sans text-base leading-relaxed resize-none outline-none" value={doc} onChange={handleChange} autoFocus />
-    </div>
-    <div className="h-full overflow-y-auto overscroll-none p-4 box-border">
+  return <div className="grid box-border h-screen md:grid-cols-2">
+    <textarea
+      className="p-4 bg-neutral-50 border-none box-border font-sans text-base leading-relaxed resize-y md:resize-none outline-none"
+      value={doc}
+      onChange={handleChange}
+      autoFocus
+    />
+    <div className="p-4 box-border overflow-y-auto">
       <Markdown>{output.data?.choices[0].message.content}</Markdown>
     </div>
   </div >;
