@@ -2,34 +2,43 @@
 
 import Editor, { EditorChangeHandler } from "@/Editor";
 import Markdown from "@/Markdown";
-import { complete } from "@/openai";
+import openai from "@/openai";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@uidotdev/usehooks";
 import { useCallback, useDeferredValue, useState } from "react";
 
+const MODEL = "gpt-4o-mini";
+const SEED = 1;
+const INPUT_DEBOUNCE_INTERVAL_MS = 500;
+
 export default function Page() {
-  const [doc, setDocument] = useState<string>("");
+  const [input, setInput] = useState<string>("");
+  const [output, setOutput] = useState<string>("");
 
   const handleChange = useCallback<EditorChangeHandler>((e) => {
-    setDocument(e);
-  }, [setDocument]);
+    setInput(e);
+  }, [setInput]);
 
-  const deferredDocument = useDeferredValue(doc);
-  const debouncedDocument = useDebounce(deferredDocument.trim(), 500);
-  const output = useQuery({
-    // Using the whole document as the key might seem niaive, but the
-    // alternative is that we hash the document, which `react-query` already
-    // does that for us. We can use our own hash when it's needed elsewhere.
-    queryKey: ['document', debouncedDocument],
+  const deferredInput = useDeferredValue(input);
+  const debouncedInput = useDebounce(deferredInput.trim(), INPUT_DEBOUNCE_INTERVAL_MS);
+
+  const query = useQuery({
+    queryKey: ['node', debouncedInput],
     queryFn: async ({ signal }) => {
-      return await complete([{ role: "user", content: debouncedDocument }], signal);
+      const out = await openai("v1/chat/completions", {
+        model: MODEL,
+        messages: [{ role: "user", content: debouncedInput }],
+        seed: SEED
+      }, signal);
+      setOutput(out.choices[0].message.content);
+      return out;
     }
   });
 
   return <div className="grid box-border h-screen md:grid-cols-2">
-    <Editor onChange={handleChange} className="p-4 bg-neutral-50 outline-none font-sans text-base leading-relaxed" autofocus />
+    <Editor onChange={handleChange} className="p-4 bg-neutral-100 outline-none font-sans text-base leading-relaxed" autofocus />
     <div className="p-4 box-border overflow-y-auto">
-      <Markdown>{output.data?.choices[0].message.content}</Markdown>
+      <Markdown>{output}</Markdown>
     </div>
   </div >;
 }
