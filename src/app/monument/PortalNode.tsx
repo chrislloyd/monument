@@ -6,8 +6,6 @@ export class PortalNode extends DecoratorNode<ReactNode> {
   __alt: string;
   __src: string;
 
-  __value: string;
-
   static getType(): string {
     return 'portal';
   }
