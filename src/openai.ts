@@ -1,5 +1,6 @@
 import remember from "./remember";
 
+export type ChatMessage = { role: "system" | "user" | "assistant", content: string };
 
 export default async function openai(path: string, params: any, signal: AbortSignal): Promise<any> {
   const apiKey = remember('What is your OpenAI key?');

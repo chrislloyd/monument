@@ -9,7 +9,10 @@ export default function Markdown({ children }: { children: string }) {
     h2: ({ children }) => <h2 className="m-0">{children}</h2>,
     h3: ({ children }) => <h3 className="m-0">{children}</h3>,
   };
-  return <ReactMarkdown className="font-sans leading-relaxed grid gap-2" components={components}>
+  return <ReactMarkdown
+    className="font-sans leading-relaxed"
+    components={components}
+  >
     {children}
   </ReactMarkdown>;
 }
