@@ -8,19 +8,23 @@ type Props = {
   onChange: (value: string) => void
 };
 
+const POLL_INTERVAL_MS = 100;
 
 export default function Portal({ alt, src, value, onChange }: Props) {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const value = new Date().toLocaleString();
+      const nextValue = new Date().toLocaleString();
+      if (value === nextValue) {
+        return;
+      }
       editor.update(() => {
-        onChange(value);
+        onChange(nextValue);
       });
-    }, 1000);
+    }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  });
+  }, [value]);
 
   const classNames = new Set([
     "inline-block",

@@ -3,18 +3,18 @@
 import Markdown from "@/Markdown";
 import openai, { type ChatMessage } from "@/openai";
 import { useQuery } from "@tanstack/react-query";
-import { useDebounce } from "@uidotdev/usehooks";
+import { useDebounce, useThrottle } from "@uidotdev/usehooks";
 import { useDeferredValue, useEffect, useState } from "react";
 
 type Props = { input: string };
 
 const MODEL = "gpt-4o-mini";
 const SEED = 1;
-const INPUT_DEBOUNCE_INTERVAL_MS = 1_200;
 
 export default function Assistant({ input }: Props) {
   const deferredInput = useDeferredValue(input.trim());
-  const debouncedInput = useDebounce(deferredInput, INPUT_DEBOUNCE_INTERVAL_MS);
+  const throttledFirst = useThrottle(deferredInput, 2000);
+  const debouncedInput = useDebounce(throttledFirst, 1_000);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const lastMessage = messages[messages.length - 1] || "";
