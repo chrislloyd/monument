@@ -16,7 +16,7 @@ export const PortalTransformer: TextMatchTransformer = {
       return null;
     }
     if (node.hasValue()) {
-      return node.getValue();
+      return node.getValue() || null;
     }
     return `![${node.getAlt()}](${node.getSrc()})`;
   },
