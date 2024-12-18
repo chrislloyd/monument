@@ -15,7 +15,10 @@ export const PortalTransformer: TextMatchTransformer = {
     if (!$isPortalNode(node)) {
       return null;
     }
-    return `![${node.__alt}](${node.__src})`;
+    if (node.hasValue()) {
+      return node.getValue();
+    }
+    return `![${node.getAlt()}](${node.getSrc()})`;
   },
   trigger: ')',
 };

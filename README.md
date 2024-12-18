@@ -1,9 +1,8 @@
 # Monument
 
 * [Try it out](/monument)
-* [Recent changes](https://github.com/chrislloyd/monument/commits)
+* [Latest updates](https://github.com/chrislloyd/monument/commits)
 * [Source code](https://github.com/chrislloyd/monument)
-
 
 **Monument** is a study in building a programming environment from the ground up
 for AI. Our current operating systems are based around files, processes,
