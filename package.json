@@ -1,0 +1,23 @@
+{
+  "name": "monument",
+  "engines": {
+    "bun": ">=1.2.2"
+  },
+  "packageManager": "bun@1.2.2",
+  "scripts": {
+    "test": "bun test"
+  },
+  "bin": "bin/monument.ts",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/marked": "^6.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "marked": "^15.0.6",
+    "node-html-parser": "^7.0.1",
+    "openai": "^4.82.0"
+  }
+}
