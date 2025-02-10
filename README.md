@@ -72,7 +72,7 @@ TODO
 ### Basic Example
 
 ```shell
-bun run bin/monument.ts --output-directory out
+bun run bin/monument.ts --directory . --output-directory out
 ```
 
 ### More Examples
@@ -136,15 +136,15 @@ This project embraces experimentation. Given its exploratory nature, I prioritiz
 
 ### Directory Structure
 
-* `/bin` - Command-line tools and utilities with colocated integration tests
-* `/docs` - Markdown project documentation
-* `/src` - Core source files with colocated unit tests
+* [bin](bin) ommand-line tools and utilities with colocated integration tests
+* [docs](docs) - Markdown project documentation
+* [src](src) - Core source files with colocated unit tests
 
-## Glossary
+## Terminology
 
 TODO
 
-* Transclusion
+* [Transclusion](docs/transclusion.md)
 * LLM
 * Reactive processing
 * Hypertext

@@ -1,5 +1,6 @@
 {
   "name": "monument",
+  "private": true,
   "engines": {
     "bun": ">=1.2.2"
   },
@@ -16,8 +17,9 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@types/glob": "^8.1.0",
+    "glob": "^11.0.1",
     "marked": "^15.0.6",
-    "node-html-parser": "^7.0.1",
     "openai": "^4.82.0"
   }
 }

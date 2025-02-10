@@ -124,6 +124,11 @@ function stop(id: Ref, from: Ref) {
   }
 }
 
+if (!Bun.argv[2]) {
+  console.error("Error: Input file path is required");
+  process.exit(1);
+}
+
 const source = Bun.pathToFileURL(Bun.argv[2]);
 const doc = start(source);
 
