@@ -35,14 +35,10 @@ async function processFile(
   const outputPath = path.join(outputDir, relativePath);
 
   // Create temp file path for process-doc output
-  const tempPath = path.join(outputDir, `${relativePath}.txt`);
+  const tempPath = Bun.file(path.join(outputDir, `${relativePath}.txt`));
 
   // Create pipeline: process-doc -> watch-ai -> clear-log
   const doc = processDoc(scope, filePath);
-
-  const docClearLog = spawn("bun", ["src/clear-log.ts", tempPath], {
-    stdio: ["pipe", "ignore", "inherit"],
-  });
 
   // Pipe processDoc to `clear-log(1)`
   scope.effect(() => {
@@ -50,7 +46,7 @@ async function processFile(
     if (!value) {
       return;
     }
-    docClearLog.stdin.write(value);
+    tempPath.write(value);
   });
 
   const watchAi = spawn(
@@ -63,7 +59,7 @@ async function processFile(
       values["model"]!,
       "--debounce",
       values["debounce"]!,
-      tempPath,
+      tempPath.name!,
     ],
     { stdio: ["ignore", "pipe", "inherit"] },
   );
@@ -73,7 +69,6 @@ async function processFile(
   watchAi.stdout.pipe(aiClearLog.stdin);
 
   // Handle process errors
-  docClearLog.on("error", console.error);
   watchAi.on("error", console.error);
   aiClearLog.on("error", console.error);
 }
