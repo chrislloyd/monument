@@ -134,19 +134,23 @@ function stop(id: Ref, from: Ref) {
   }
 }
 
-if (!Bun.argv[2]) {
-  console.error("Error: Input file path is required");
-  process.exit(1);
+async function main(argv: string[]) {
+  if (!argv[2]) {
+    console.error("Error: Input file path is required");
+    process.exit(1);
+  }
+
+  const source = Bun.pathToFileURL(argv[2]);
+  const doc = start(source);
+
+  scope.effect(() => {
+    const value = doc.get();
+    if (!value) {
+      return;
+    }
+    console.clear();
+    console.log(value);
+  });
 }
 
-const source = Bun.pathToFileURL(Bun.argv[2]);
-const doc = start(source);
-
-scope.effect(() => {
-  const value = doc.get();
-  if (!value) {
-    return;
-  }
-  console.clear();
-  console.log(value);
-});
+await main(Bun.argv);
