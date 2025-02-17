@@ -7,6 +7,18 @@ import { spawn } from "child_process";
 import path from "path";
 import { mkdir } from "node:fs/promises";
 import { glob } from "glob";
+import { Monument } from "../src/process-doc";
+import { Scope, type Signal } from "../src/signals";
+
+function processDoc(
+  scope: Scope,
+  filePath: string,
+): Signal<string | undefined> {
+  const monument = new Monument(scope);
+  const source = Bun.pathToFileURL(filePath);
+  const doc = monument.start(source);
+  return doc;
+}
 
 async function processFile(
   filePath: string,
@@ -14,10 +26,10 @@ async function processFile(
   inputDir: string,
   values: Record<string, string | undefined>,
 ) {
+  const scope = new Scope();
+
   if (!filePath.endsWith(".md")) return;
   if (filePath.includes(outputDir)) return;
-
-  console.error("Processing", filePath);
 
   const relativePath = path.relative(inputDir, filePath);
   const outputPath = path.join(outputDir, relativePath);
@@ -26,13 +38,20 @@ async function processFile(
   const tempPath = path.join(outputDir, `${relativePath}.txt`);
 
   // Create pipeline: process-doc -> watch-ai -> clear-log
-  const processDoc = spawn("bun", ["src/process-doc.ts", filePath], {
-    stdio: ["ignore", "pipe", "ignore"],
-  });
+  const doc = processDoc(scope, filePath);
+
   const docClearLog = spawn("bun", ["src/clear-log.ts", tempPath], {
-    stdio: ["pipe", "ignore", "ignore"],
+    stdio: ["pipe", "ignore", "inherit"],
   });
-  processDoc.stdout.pipe(docClearLog.stdin);
+
+  // Pipe processDoc to `clear-log(1)`
+  scope.effect(() => {
+    const value = doc.get();
+    if (!value) {
+      return;
+    }
+    docClearLog.stdin.write(value);
+  });
 
   const watchAi = spawn(
     "bun",
@@ -46,22 +65,17 @@ async function processFile(
       values["debounce"]!,
       tempPath,
     ],
-    { stdio: ["ignore", "pipe", "ignore"] },
+    { stdio: ["ignore", "pipe", "inherit"] },
   );
   const aiClearLog = spawn("bun", ["src/clear-log.ts", outputPath], {
-    stdio: ["pipe", "ignore", "ignore"],
+    stdio: ["pipe", "ignore", "inherit"],
   });
   watchAi.stdout.pipe(aiClearLog.stdin);
 
   // Handle process errors
-  processDoc.on("error", console.error);
   docClearLog.on("error", console.error);
   watchAi.on("error", console.error);
   aiClearLog.on("error", console.error);
-
-  await new Promise((resolve) => {
-    processDoc.on("exit", resolve);
-  });
 }
 
 async function main(argv: string[]) {
@@ -98,12 +112,12 @@ async function main(argv: string[]) {
     process.exit(1);
   }
 
-  // Ensure output directory exists
-  await mkdir(values["output-directory"], { recursive: true });
-
   // Watch for markdown files in the input directory
-  const inputDir = path.resolve(values.directory ?? ".");
+  const inputDir = path.resolve(values["directory"]);
   const outputDir = path.resolve(values["output-directory"]);
+
+  // Ensure output directory exists
+  await mkdir(outputDir, { recursive: true });
 
   // Initial processing of existing files
   const files = await glob("**/*.md", { cwd: inputDir });

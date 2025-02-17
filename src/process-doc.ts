@@ -12,7 +12,7 @@ type Document = {
   parents: Set<Ref>;
 };
 
-class Monument {
+export class Monument {
   #documents: Map<Ref, Document> = new Map();
 
   constructor(private scope: Scope) {}
@@ -133,26 +133,3 @@ class Monument {
     }
   }
 }
-
-async function main(argv: string[]) {
-  if (!argv[2]) {
-    console.error("Error: Input file path is required");
-    process.exit(1);
-  }
-
-  const scope = new Scope();
-  const monument = new Monument(scope);
-  const source = Bun.pathToFileURL(argv[2]);
-  const doc = monument.start(source);
-
-  scope.effect(() => {
-    const value = doc.get();
-    if (!value) {
-      return;
-    }
-    console.clear();
-    console.log(value);
-  });
-}
-
-await main(Bun.argv);

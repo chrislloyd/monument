@@ -1,3 +1,5 @@
+import OpenAI from "openai";
+
 type Model = {
   stream(messages: string[], abortSignal: AbortSignal): AsyncGenerator<string>;
 };
@@ -6,10 +8,13 @@ export function openai(model: string, apiKey: string): Model {
   const openai = new OpenAI({ apiKey });
   return {
     async *stream(messages, abortSignal) {
-      const response = openai.chat.completions.create(
+      const response = await openai.chat.completions.create(
         {
           model,
-          messages: messages.map((content) => [{ role: "user", content }]),
+          messages: messages.map((content) => ({
+            role: "user",
+            content,
+          })),
           stream: true,
         },
         {
@@ -17,7 +22,11 @@ export function openai(model: string, apiKey: string): Model {
         },
       );
       for await (const chunk of response) {
-        yield chunk.choices[0]?.delta.content;
+        const content = chunk.choices[0]?.delta.content;
+        if (!content) {
+          continue;
+        }
+        yield content;
       }
     },
   };

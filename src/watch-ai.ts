@@ -41,9 +41,7 @@ let state = {
 };
 
 async function processFileUpdate() {
-  console.clear();
-
-  const prompt = await file(new URL(filePath));
+  const prompt = await file(Bun.pathToFileURL(filePath));
 
   state.activeAbortController = new AbortController();
 
