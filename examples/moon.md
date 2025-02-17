@@ -1,1 +1,1 @@
-What is the phase of the moon? It is Feb 17, 2025.
+What is the phase of the moon? It is Jan 1, 2000.

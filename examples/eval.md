@@ -6,6 +6,6 @@ You are a university grader. given the question:
 
 and the answer:
 
-!\[answer](out/math.md)
+![answer](out/question.md)
 
 Reply with either PASS or FAIL.
