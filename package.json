@@ -20,6 +20,8 @@
     "@types/glob": "^8.1.0",
     "glob": "^11.0.1",
     "marked": "^15.0.6",
-    "openai": "^4.82.0"
+    "openai": "^4.82.0",
+    "signal-polyfill": "^0.2.2",
+    "signal-utils": "^0.21.1"
   }
 }

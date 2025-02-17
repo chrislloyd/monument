@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
-import OpenAI from "openai";
-import { watch } from 'node:fs/promises';
-import { parseArgs } from 'util';
+import { watch } from "node:fs/promises";
+import { parseArgs } from "util";
+import { openai } from "./ai";
+import { file } from "./load";
 
 const { values, positionals } = parseArgs({
   args: Bun.argv,
@@ -12,12 +13,12 @@ const { values, positionals } = parseArgs({
     },
     debounce: {
       type: "string",
-      default: "300"
+      default: "300",
     },
     model: {
       type: "string",
-      default: "gpt-4o-mini"
-    }
+      default: "gpt-4o-mini",
+    },
   },
   strict: true,
   allowPositionals: true,
@@ -31,37 +32,27 @@ if (positionals.length < 3) {
   process.exit(1);
 }
 
-const filePath = positionals[2];
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+const filePath = positionals[2]!;
+const model = openai("gpt-4o-mini", OPENAI_API_KEY);
 
 let state = {
   debounceTimer: null as Timer | null,
   activeAbortController: null as AbortController | null,
-}
+};
 
 async function processFileUpdate() {
   console.clear();
 
-  const prompt = await Bun.file(filePath).text();
+  const prompt = await file(new URL(filePath));
 
   state.activeAbortController = new AbortController();
 
   try {
-    const response = await openai.chat.completions.create(
-      {
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        stream: true,
-      },
-      {
-        signal: state.activeAbortController.signal,
-      }
-    );
-
-    for await (let chunk of response) {
-      const content = chunk.choices[0].delta.content;
-      if (!content) continue;
-      process.stdout.write(content);
+    for await (const chunk of model.stream(
+      [prompt],
+      state.activeAbortController.signal,
+    )) {
+      process.stdout.write(chunk);
     }
   } finally {
     state.activeAbortController = null;

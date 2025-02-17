@@ -1,20 +1,24 @@
-import { watch } from 'node:fs/promises';
-import markdown from './markdown';
-import { Scope, type Signal } from './signals';
+import { watch } from "node:fs/promises";
+import markdown from "./markdown";
+import { Scope, type Signal } from "./signals";
+import { file } from "./load";
 
 type Ref = string;
 
 type Document = {
-  value: Signal<string | undefined>,
-  watchAbortController: AbortController,
-  dependencies: Set<Ref>,
-  parents: Set<Ref>,
+  value: Signal<string | undefined>;
+  watchAbortController: AbortController;
+  dependencies: Set<Ref>;
+  parents: Set<Ref>;
 };
 
 const documents: Map<Ref, Document> = new Map();
 const scope = new Scope();
 
-function start(url: URL, parent: URL | undefined = undefined): Document["value"] {
+function start(
+  url: URL,
+  parent: URL | undefined = undefined,
+): Document["value"] {
   let ref: Ref = url.href;
   let doc = documents.get(ref);
 
@@ -33,15 +37,17 @@ function start(url: URL, parent: URL | undefined = undefined): Document["value"]
   const abortController = new AbortController();
   (async () => {
     async function read() {
-      raw.set(await Bun.file(url).text());
+      raw.set(await file(url));
     }
 
     await read();
     try {
-      for await (const change of watch(url.pathname, { signal: abortController.signal })) {
+      for await (const change of watch(url.pathname, {
+        signal: abortController.signal,
+      })) {
         switch (change.eventType) {
-          case 'change':
-            await read()
+          case "change":
+            await read();
             break;
           default:
             stop(url.href, ref);
@@ -49,7 +55,7 @@ function start(url: URL, parent: URL | undefined = undefined): Document["value"]
         }
       }
     } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') {
+      if (e instanceof DOMException && e.name === "AbortError") {
         // ignore
       } else {
         throw e;
@@ -59,7 +65,9 @@ function start(url: URL, parent: URL | undefined = undefined): Document["value"]
 
   const value = scope.computed<string | undefined>(() => {
     const rawValue = raw.get();
-    if (rawValue === undefined) { return; }
+    if (rawValue === undefined) {
+      return;
+    }
 
     const prevDependencies = new Set(dependencies);
     dependencies.clear();
@@ -90,7 +98,7 @@ function start(url: URL, parent: URL | undefined = undefined): Document["value"]
       stop(dep, ref);
     }
 
-    if (output.some(part => part === undefined)) {
+    if (output.some((part) => part === undefined)) {
       return;
     }
 
@@ -111,7 +119,9 @@ function start(url: URL, parent: URL | undefined = undefined): Document["value"]
 
 function stop(id: Ref, from: Ref) {
   const doc = documents.get(id);
-  if (!doc) { return; }
+  if (!doc) {
+    return;
+  }
 
   doc.parents.delete(from);
 
@@ -134,7 +144,9 @@ const doc = start(source);
 
 scope.effect(() => {
   const value = doc.get();
-  if (!value) { return; }
+  if (!value) {
+    return;
+  }
   console.clear();
   console.log(value);
 });
