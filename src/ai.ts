@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-type Model = {
+export type Model = {
   stream(messages: string[], abortSignal: AbortSignal): AsyncGenerator<string>;
 };
 

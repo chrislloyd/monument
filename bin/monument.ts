@@ -1,14 +1,11 @@
-/**
- * This is hacked together from my existing scripts, it's not ideal.
- */
 import { parseArgs } from "util";
 import { watch } from "node:fs/promises";
-import { spawn } from "child_process";
 import path from "path";
 import { mkdir } from "node:fs/promises";
 import { glob } from "glob";
 import { Monument } from "../src/process-doc";
 import { Scope, type Signal } from "../src/signals";
+import { openai } from "../src/ai";
 
 function processDoc(
   scope: Scope,
@@ -37,40 +34,27 @@ async function processFile(
   // Create temp file path for process-doc output
   const tempPath = Bun.file(path.join(outputDir, `${relativePath}.txt`));
 
-  // Create pipeline: process-doc -> watch-ai -> clear-log
   const doc = processDoc(scope, filePath);
 
-  // Pipe processDoc to `clear-log(1)`
   scope.effect(() => {
     const value = doc.get();
     if (!value) {
       return;
     }
     tempPath.write(value);
-  });
 
-  const watchAi = spawn(
-    "bun",
-    [
-      "src/watch-ai.ts",
-      "--apiKey",
-      values["api-key"]!,
-      "--model",
-      values["model"]!,
-      "--debounce",
-      values["debounce"]!,
-      tempPath.name!,
-    ],
-    { stdio: ["ignore", "pipe", "inherit"] },
-  );
-  const aiClearLog = spawn("bun", ["src/clear-log.ts", outputPath], {
-    stdio: ["pipe", "ignore", "inherit"],
+    const model = openai("gpt-4o-mini", values["OPENAI_API_KEY"]!);
+    const abortController = new AbortController();
+    (async () => {
+      const abortSignal = abortController.signal;
+      let chunks = [];
+      console.log("querying model", filePath);
+      for await (const chunk of model.stream([value], abortSignal)) {
+        chunks.push(chunk);
+      }
+      Bun.file(outputPath).write(chunks.join(""));
+    })();
   });
-  watchAi.stdout.pipe(aiClearLog.stdin);
-
-  // Handle process errors
-  watchAi.on("error", console.error);
-  aiClearLog.on("error", console.error);
 }
 
 async function main(argv: string[]) {
