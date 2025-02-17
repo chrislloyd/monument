@@ -35,7 +35,7 @@
   * [ ] examples of what you can actually build
     * [ ] time zone converter
     * [ ] evals
-    * [ ] writing prompts 
+    * [ ] writing prompts
   * [ ] explanation of `.txt` and `.ai.txt` extensions
   * [ ] include most of my obsidian notes
   * [ ] screenshots/videos
@@ -72,7 +72,7 @@ TODO
 ### Basic Example
 
 ```shell
-bun run bin/monument.ts --directory . --output-directory out
+bun run bin/monument.ts --directory examples --output-directory examples/out
 ```
 
 ### More Examples
