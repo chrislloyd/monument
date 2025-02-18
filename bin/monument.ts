@@ -4,7 +4,7 @@ import { mkdir } from "node:fs/promises";
 import { glob } from "glob";
 import { Monument } from "../src/process-doc";
 import { Scope } from "../src/signals";
-import { openai } from "../src/ai";
+import { openai } from "../src/models";
 
 async function processFile(
   scope: Scope,

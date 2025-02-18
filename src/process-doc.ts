@@ -1,7 +1,7 @@
 import { watch } from "node:fs/promises";
 import markdown from "./markdown";
 import { Scope, type Signal } from "./signals";
-import { file } from "./load";
+import { file } from "./loaders";
 
 type Ref = string;
 
