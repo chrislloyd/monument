@@ -1,12 +1,12 @@
 import { watch } from "node:fs/promises";
 import markdown from "./markdown";
-import { Scope, type Signal } from "./signals";
 import { file } from "./loaders";
+import { Signal } from "signal-polyfill";
 
 type Ref = string;
 
 type Document = {
-  value: Signal<string | undefined>;
+  value: Signal.Computed<string | undefined>;
   watchAbortController: AbortController;
   dependencies: Set<Ref>;
   parents: Set<Ref>;
@@ -14,8 +14,6 @@ type Document = {
 
 export class Monument {
   #documents: Map<Ref, Document> = new Map();
-
-  constructor(private scope: Scope) {}
 
   start(url: URL, parent: URL | undefined = undefined): Document["value"] {
     let ref: Ref = url.href;
@@ -32,7 +30,7 @@ export class Monument {
     const parents = new Set<Ref>();
 
     // File watching
-    const raw = this.scope.state<string | undefined>(undefined);
+    const raw = new Signal.State<string | undefined>(undefined);
     const abortController = new AbortController();
     (async () => {
       async function read() {
@@ -62,7 +60,7 @@ export class Monument {
       }
     })();
 
-    const value = this.scope.computed<string | undefined>(() => {
+    const value = new Signal.Computed<string | undefined>(() => {
       const rawValue = raw.get();
       if (rawValue === undefined) {
         return;

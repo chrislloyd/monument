@@ -3,11 +3,11 @@ import path from "path";
 import { mkdir } from "node:fs/promises";
 import { glob } from "glob";
 import { Monument } from "../src/process-doc";
-import { Scope } from "../src/signals";
 import { openai } from "../src/models";
+import { effect } from "signal-utils/subtle/microtask-effect";
+import { AsyncComputed } from "signal-utils/async-computed";
 
 async function processFile(
-  scope: Scope,
   monument: Monument,
   filePath: string,
   outputDir: string,
@@ -26,33 +26,36 @@ async function processFile(
   const doc = monument.start(source);
 
   // Write out formatted markdown
-  scope.effect(() => {
+  effect(() => {
     const value = doc.get();
     if (!value) return;
     tempPath.write(value);
   });
 
-  // Call out to
-  scope.effect(() => {
+  const model = openai("gpt-4o-mini", values["OPENAI_API_KEY"]!);
+  const ai = new AsyncComputed(async (signal) => {
     const value = doc.get();
     if (!value) return;
-    const model = openai("gpt-4o-mini", values["OPENAI_API_KEY"]!);
-    const abortController = new AbortController();
-    (async () => {
-      const abortSignal = abortController.signal;
-      let chunks = [];
-      for await (const chunk of model.stream([value], abortSignal)) {
-        chunks.push(chunk);
-      }
-      Bun.file(outputPath).write(chunks.join(""));
-      console.log("*", outputPath);
-    })();
+
+    let chunks = [];
+    for await (const chunk of model.stream([value], signal)) {
+      chunks.push(chunk);
+    }
+    return chunks.join("");
+  });
+
+  // Call out to
+  effect(() => {
+    const chunks = ai.get();
+    if (!chunks) return;
+
+    Bun.file(outputPath).write(chunks);
+    console.log("*", outputPath);
   });
 }
 
 async function main(argv: string[]) {
-  const scope = new Scope();
-  const monument = new Monument(scope);
+  const monument = new Monument();
 
   const { values } = parseArgs({
     args: argv,
@@ -95,7 +98,6 @@ async function main(argv: string[]) {
   const files = await glob("**/*.md", { cwd: inputDir });
   for (const file of files) {
     processFile(
-      scope,
       monument,
       path.join(inputDir, file),
       outputDir,
