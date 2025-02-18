@@ -20,17 +20,8 @@ async function processFile(
   const relativePath = path.relative(inputDir, filePath);
   const outputPath = path.join(outputDir, relativePath);
 
-  const tempPath = Bun.file(path.join(outputDir, `${relativePath}.txt`));
-
   const source = Bun.pathToFileURL(filePath);
   const doc = monument.start(source);
-
-  // Write out formatted markdown
-  effect(() => {
-    const value = doc.get();
-    if (!value) return;
-    tempPath.write(value);
-  });
 
   const model = openai("gpt-4o-mini", values["OPENAI_API_KEY"]!);
   const ai = new AsyncComputed(async (signal) => {
