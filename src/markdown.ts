@@ -4,12 +4,12 @@ import * as Document from "./document";
  * Processes markdown content and yields document fragments. Extends standard markdown with:
  * - Transclusions: `![description](source)` - embeds external content
  * - Actions: `[description](source)` - creates interactive links
- * 
+ *
  * The function parses the content and breaks it into fragments:
  * 1. Plain text between special syntax
  * 2. Transclusions for embedding external content
  * 3. Actions for interactive elements
- * 
+ *
  * @param content - The markdown content to process
  * @yields {Document.Fragment} Document fragments in sequence:
  *   - Document.text() for plain text
@@ -27,17 +27,22 @@ import * as Document from "./document";
  * }
  * ```
  */
-export default function* markdown(content: string): Generator<Document.Fragment> {
+export default function* markdown(
+  content: string,
+): Generator<Document.Fragment> {
   // Build regex for matching both transclusions (![]()) and actions ([]()):
-  const markdownLinkRegex = new RegExp([
-    '(!?)',                    // Optional ! prefix for transclusions
-    '\\[',                     // Opening [ for description
-    '(?<description>[^\\]]*)', // Description content (anything but ])
-    '\\]',                     // Closing ] for description
-    '\\(',                     // Opening ( for source
-    '(?<src>[^)]*)',          // Source content (anything but ))
-    '\\)',                     // Closing ) for source
-  ].join(''), 'g');           // Global flag to match all occurrences
+  const markdownLinkRegex = new RegExp(
+    [
+      "(!?)", // Optional ! prefix for transclusions
+      "\\[", // Opening [ for description
+      "(?<description>[^\\]]*)", // Description content (anything but ])
+      "\\]", // Closing ] for description
+      "\\(", // Opening ( for source
+      "(?<src>[^)]*)", // Source content (anything but ))
+      "\\)", // Closing ) for source
+    ].join(""),
+    "g",
+  ); // Global flag to match all occurrences
 
   // Find all markdown links (both transclusions and actions) in the content
   const matches = Array.from(content.matchAll(markdownLinkRegex));
@@ -45,10 +50,7 @@ export default function* markdown(content: string): Generator<Document.Fragment>
   // Track our position in the content as we process it
   let offset = 0;
 
-  // Process each match in sequence
-  for (let i = 0; i < matches.length; i += 1) {
-    const match = matches[i];
-
+  for (const match of matches) {
     // If there's text before this match, yield it as a text fragment
     if (match.index !== 0) {
       yield Document.text(content.slice(offset, match.index));
@@ -69,8 +71,7 @@ export default function* markdown(content: string): Generator<Document.Fragment>
   }
 
   // If there's any remaining text after the last match, yield it
-  if (offset === content.length) {
-    return;
+  if (offset !== content.length) {
+    yield Document.text(content.slice(offset));
   }
-  yield Document.text(content.slice(offset));
 }
