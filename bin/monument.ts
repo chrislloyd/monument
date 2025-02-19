@@ -2,13 +2,13 @@ import { parseArgs } from "util";
 import path from "path";
 import { mkdir } from "node:fs/promises";
 import { glob } from "glob";
-import { Monument } from "../src/process-doc";
+import ThingMananger from "../src/ThingManager";
 import { openai, type Model } from "../src/models";
 import { effect } from "signal-utils/subtle/microtask-effect";
 import { AsyncComputed } from "signal-utils/async-computed";
 
 async function processFile(
-  monument: Monument,
+  monument: ThingMananger,
   filePath: string,
   outputDir: string,
   inputDir: string,
@@ -82,7 +82,7 @@ async function main(argv: string[]) {
 
   await mkdir(out, { recursive: true });
 
-  const monument = new Monument(model, cwd, out);
+  const monument = new ThingMananger(model, cwd, out);
 
   const files = await glob("**/*.md", {
     cwd: cwd,

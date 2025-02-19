@@ -1,9 +1,8 @@
-import { watch } from "node:fs/promises";
 import markdown from "./markdown";
-import { file } from "./loaders";
 import { Signal } from "signal-polyfill";
 import type { Model } from "./models";
 import { AsyncComputed } from "signal-utils/async-computed";
+import Thing from "./Thing";
 
 type Ref = string;
 
@@ -14,7 +13,7 @@ type Document = {
   parents: Set<Ref>;
 };
 
-export class Monument {
+export default class ThingMananger {
   #documents: Map<Ref, Document> = new Map();
 
   constructor(
@@ -30,6 +29,7 @@ export class Monument {
     let ref: Ref = url.href;
     let doc = this.#documents.get(ref);
 
+    // Upsert document
     if (doc) {
       if (parent) {
         doc.parents.add(parent.href);
@@ -40,31 +40,21 @@ export class Monument {
     const dependencies = new Set<Ref>();
     const parents = new Set<Ref>();
 
-    // File watching
-    const raw = new Signal.State(await file(url));
+    const thing = new Thing(url);
 
     const abortController = new AbortController();
+    const generator = thing.poll(abortController.signal);
+
+    const firstValue = await generator.next();
+    if (!firstValue.value) throw new Error("Document generator didn't yield");
+
+    const raw = new Signal.State(firstValue.value);
+
     (async () => {
-      try {
-        for await (const change of watch(url.pathname, {
-          signal: abortController.signal,
-        })) {
-          switch (change.eventType) {
-            case "change":
-              raw.set(await file(url));
-              break;
-            default:
-              this.stop(url.href, ref);
-              break;
-          }
-        }
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") {
-          // ignore
-        } else {
-          throw e;
-        }
+      for await (const content of generator) {
+        raw.set(content);
       }
+      this.stop(url.href, ref);
     })();
 
     const value = new AsyncComputed(async () => {
