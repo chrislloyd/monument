@@ -14,9 +14,6 @@ async function processFile(
   inputDir: string,
   model: Model,
 ) {
-  const relativePath = path.relative(inputDir, filePath);
-  const outputPath = path.join(outputDir, relativePath);
-
   const source = Bun.pathToFileURL(filePath);
   const doc = monument.start(source);
 
@@ -36,6 +33,8 @@ async function processFile(
     const chunks = ai.get();
     if (!chunks) return;
 
+    const relativePath = path.relative(inputDir, filePath);
+    const outputPath = path.join(outputDir, relativePath);
     Bun.file(outputPath).write(chunks);
     console.log("*", outputPath);
   });
