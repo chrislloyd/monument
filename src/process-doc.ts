@@ -2,6 +2,7 @@ import { watch } from "node:fs/promises";
 import markdown from "./markdown";
 import { file } from "./loaders";
 import { Signal } from "signal-polyfill";
+import type { Model } from "./models";
 
 type Ref = string;
 
@@ -14,6 +15,12 @@ type Document = {
 
 export class Monument {
   #documents: Map<Ref, Document> = new Map();
+
+  constructor(
+    private model: Model,
+    private cwd: string,
+    private out: string,
+  ) {}
 
   start(url: URL, parent: URL | undefined = undefined): Document["value"] {
     let ref: Ref = url.href;

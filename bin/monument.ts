@@ -41,8 +41,6 @@ async function processFile(
 }
 
 async function main(argv: string[]) {
-  const monument = new Monument();
-
   const { values } = parseArgs({
     args: argv,
     options: {
@@ -81,24 +79,20 @@ async function main(argv: string[]) {
   }
 
   const model = openai(values["model"], values["api-key"]);
-  const inputDir = path.resolve(values["directory"]);
-  const outputDir = path.resolve(values["output-directory"]);
+  const cwd = path.resolve(values["directory"]);
+  const out = path.resolve(values["output-directory"]);
 
-  await mkdir(outputDir, { recursive: true });
+  await mkdir(out, { recursive: true });
+
+  const monument = new Monument(model, cwd, out);
 
   const files = await glob("**/*.md", {
-    cwd: inputDir,
-    ignore: path.join(outputDir, "**"),
+    cwd: cwd,
+    ignore: path.join(out, "**"),
   });
 
   for (const file of files) {
-    processFile(
-      monument,
-      path.join(inputDir, file),
-      outputDir,
-      inputDir,
-      model,
-    );
+    processFile(monument, path.join(cwd, file), out, cwd, model);
   }
 }
 
