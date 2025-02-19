@@ -3,11 +3,12 @@ import markdown from "./markdown";
 import { file } from "./loaders";
 import { Signal } from "signal-polyfill";
 import type { Model } from "./models";
+import { AsyncComputed } from "signal-utils/async-computed";
 
 type Ref = string;
 
 type Document = {
-  value: Signal.Computed<string | undefined>;
+  value: AsyncComputed<string>;
   watchAbortController: AbortController;
   dependencies: Set<Ref>;
   parents: Set<Ref>;
@@ -22,7 +23,10 @@ export class Monument {
     private out: string,
   ) {}
 
-  start(url: URL, parent: URL | undefined = undefined): Document["value"] {
+  async start(
+    url: URL,
+    parent: URL | undefined = undefined,
+  ): Promise<Document["value"]> {
     let ref: Ref = url.href;
     let doc = this.#documents.get(ref);
 
@@ -37,21 +41,17 @@ export class Monument {
     const parents = new Set<Ref>();
 
     // File watching
-    const raw = new Signal.State<string | undefined>(undefined);
+    const raw = new Signal.State(await file(url));
+
     const abortController = new AbortController();
     (async () => {
-      async function read() {
-        raw.set(await file(url));
-      }
-
-      await read();
       try {
         for await (const change of watch(url.pathname, {
           signal: abortController.signal,
         })) {
           switch (change.eventType) {
             case "change":
-              await read();
+              raw.set(await file(url));
               break;
             default:
               this.stop(url.href, ref);
@@ -67,18 +67,15 @@ export class Monument {
       }
     })();
 
-    const value = new Signal.Computed<string | undefined>(() => {
+    const value = new AsyncComputed(async () => {
       const rawValue = raw.get();
-      if (rawValue === undefined) {
-        return;
-      }
 
       const prevDependencies = new Set(dependencies);
       dependencies.clear();
 
       const parts = markdown(rawValue);
 
-      let output: (string | undefined)[] = [];
+      let output: string[] = [];
       for (let part of parts) {
         switch (part.type) {
           case "text":
@@ -88,8 +85,9 @@ export class Monument {
             const childUrl = new URL(part.url, url);
             const childRef = childUrl.href;
             dependencies.add(childRef);
-            const child = this.start(childUrl, url);
-            output.push(child.get());
+            const child = await this.start(childUrl, url);
+            const childContent = await child.complete;
+            output.push(childContent);
             break;
           case "action":
             // ignore
@@ -100,10 +98,6 @@ export class Monument {
       // Cleanup removed dependencies
       for (const dep of prevDependencies.difference(dependencies)) {
         this.stop(dep, ref);
-      }
-
-      if (output.some((part) => part === undefined)) {
-        return;
       }
 
       return output.join("");
@@ -123,9 +117,7 @@ export class Monument {
 
   stop(id: Ref, from: Ref) {
     const doc = this.#documents.get(id);
-    if (!doc) {
-      return;
-    }
+    if (!doc) throw new Error(`Unable to stop, document ${id} not found`);
 
     doc.parents.delete(from);
 

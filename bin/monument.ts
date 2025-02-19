@@ -15,12 +15,10 @@ async function processFile(
   model: Model,
 ) {
   const source = Bun.pathToFileURL(filePath);
-  const doc = monument.start(source);
+  const doc = await monument.start(source);
 
   const ai = new AsyncComputed(async (signal) => {
-    const value = doc.get();
-    if (!value) return;
-
+    const value = await doc.complete;
     let chunks = [];
     for await (const chunk of model.stream([value], signal)) {
       chunks.push(chunk);
