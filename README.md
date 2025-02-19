@@ -8,6 +8,7 @@
 ---
 
 * [ ] infinite loops (disallow recursive transcludes after x recursions?)
+* [ ] lazily depend on files that haven't been created yet (i.e. files in output dirs)
 * [ ] support http resources
   * [ ] utc time from chislloyd.net/utc.md
 * [x] output chatgpt message format
