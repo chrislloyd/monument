@@ -7,6 +7,8 @@
 
 ---
 
+## TODO
+
 * [ ] infinite loops (disallow recursive transcludes after x recursions?)
 * [ ] lazily depend on files that haven't been created yet (i.e. files in output dirs)
 * [ ] support http resources
@@ -18,7 +20,7 @@
   * [ ] actions from links
   * [ ] ignore comments
 * [ ] cli
-  * [ ] file format/directory structure. `.monument` for ai? Is intermediate `.txt` needed? customizable?
+  * [ ] narrow down file format/directory names. `.monument` for ai? Is intermediate `.txt` needed? customizable?
   * [ ] interactive repl. creates a new md document
 * [ ] actions
 * [ ] hypertext
@@ -62,11 +64,25 @@ TODO
 
 ### Limitations
 
-1. Output varies. Unlike deterministic computers, models respond differently to subtle input changes. **Monument** strives for semantic stability, though exact phrasing may evolve. TODO Examples
-2. Results need verification. Models excel in many areas but can make mistakes. We plan to add safeguards, but this represents a fundamental shift in computing. TODO Examples
-3. Scope focuses on specific use cases. While **Monument** won't help you write kernel device drivers, it opens up new creative possibilities. TODO Examples
-4. inefficient! lots of calls to LLMs (TODO)
-5. private! lots of calls to remote LLMs (TODO)
+(In random order)
+
+1. Non-deterministic output. Even fully deterministic models are very sensitive[CITE] to small changes in prompts, so the output _feels_ non-deterministic. **Monument** instead strives for _semantic stability_. For example, these two outputs are roughly the same despite subtle differences in input:
+
+```
+The weather today is 19c.
+```
+
+```
+19c
+```
+
+2. Results need verification. Models excel in many areas but can make mistakes. I plan to add the ability to do evals, but this represents a fundamental shift in computing. It's much more like talking to a person than a calculator.
+
+3. High-level. **Monument** may help you meal-plan but it probably won't let you write kernel device drivers. I'm building this for muggles, not wizzards. Computer-industry professionals already have excellent tools and entrenched practices whereas regular people are chronically underserved.
+
+4. Efficiency. A key principle to **Monument** is _live-ness_. As you make changes, results should be reflected immediately. That means lots of calls to models. There exists opportunites to optimize this, but for as long as this remains a research prototype it'll cost quite a bit of energy/money.
+
+5. Privacy. I'm using remote models, specifically OpenAI.  because they are really high-quality, fast and it's relatively easy. This means all your data is transmitted to OpenAI. This isn't ideal, but the engineering work making local models work reliably feels significant but mechanistic. There isn't much to learn by changing this but is a requirement that will obviously change as this gets closer to shipping.
 
 ## Usage
 
@@ -137,8 +153,9 @@ This project embraces experimentation. Given its exploratory nature, I prioritiz
 
 ### Directory Structure
 
-* [bin](bin) ommand-line tools and utilities with colocated integration tests
+* [bin](bin) Command-line binary
 * [docs](docs) - Markdown project documentation
+* [examples](examples) - Markdown samples to illustrate what you can use this for
 * [src](src) - Core source files with colocated unit tests
 
 ## Terminology
