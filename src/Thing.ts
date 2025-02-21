@@ -1,5 +1,5 @@
 import { watch } from "fs/promises";
-import { file } from "./loaders";
+import Loader from "./Loader";
 import markdown from "./markdown";
 
 interface ThingInterface<T> {
@@ -11,27 +11,8 @@ export default class Thing implements ThingInterface<string> {
   constructor(private url: URL) {}
 
   async *poll(signal: AbortSignal) {
-    yield await file(this.url);
-
-    try {
-      for await (const change of watch(this.url.pathname, {
-        signal,
-      })) {
-        switch (change.eventType) {
-          case "change":
-            yield await file(this.url);
-            break;
-          default:
-            return;
-        }
-      }
-    } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") {
-        // ignore
-      } else {
-        throw e;
-      }
-    }
+    const loader = new Loader(this.url, signal);
+    yield* loader.load();
   }
 
   async *process(rawValue: string): AsyncGenerator<URL, string, string> {
