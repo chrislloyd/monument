@@ -45,27 +45,29 @@ export default class ThingMananger {
 
     const loader = new Loader(url);
     const abortController = new AbortController();
-    const generator = loader.load(abortController.signal);
+    const resourceGenerator = loader.load(abortController.signal);
 
-    const firstValue = await generator.next();
-    if (!firstValue.value) throw new Error("Document generator didn't yield");
+    // Wait for initial resource to load so we don't need to propagate a
+    // potentially undefined value throughout the rest of the system.
+    const initialResource = await resourceGenerator.next();
+    if (!initialResource.value)
+      throw new Error("Loader returned without yielding resoure");
 
-    const raw = new Signal.State(firstValue.value);
-
+    const resourceSignal = new Signal.State(initialResource.value);
     (async () => {
-      for await (const content of generator) {
-        raw.set(content);
+      for await (const resource of resourceGenerator) {
+        resourceSignal.set(resource);
       }
       this.stop(url.href, ref);
     })();
 
     const value = new AsyncComputed(async () => {
-      const rawValue = raw.get();
+      const resource = resourceSignal.get();
 
       const prevDependencies = new Set(dependencies);
       dependencies.clear();
 
-      const parts = markdown(rawValue);
+      const parts = markdown(resource.content);
 
       let output: string[] = [];
       for (let part of parts) {

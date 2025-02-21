@@ -9,8 +9,8 @@
 
 ## TODO
 
-* [ ] infinite loops (disallow recursive transcludes after x recursions?)
 * [ ] lazily depend on files that haven't been created yet (i.e. files in output dirs)
+* [ ] infinite loops (disallow recursive transcludes after x recursions?)
 * [ ] output chatgpt message format
   * [ ] include image context
   * [ ] split at transclusions to give the model an extra hint as to sections

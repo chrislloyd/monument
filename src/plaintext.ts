@@ -1,4 +1,4 @@
-import * as Document from "./document";
+import * as Document from "./documents";
 
 export default function* plaintext(
   _: URL,

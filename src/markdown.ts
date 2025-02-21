@@ -1,4 +1,4 @@
-import * as Document from "./document";
+import * as Document from "./documents";
 
 /**
  * Processes markdown content and yields document fragments. Extends standard markdown with:
