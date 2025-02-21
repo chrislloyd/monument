@@ -1,8 +1,8 @@
-import markdown from "./markdown";
 import { Signal } from "signal-polyfill";
 import type { Model } from "./models";
 import { AsyncComputed } from "signal-utils/async-computed";
 import Loader from "./Loader";
+import Renderer, { type RenderContext } from "./Renderer";
 
 type Ref = string;
 
@@ -69,27 +69,16 @@ export default class ThingMananger {
       const prevDependencies = new Set(dependencies);
       dependencies.clear();
 
-      const parts = markdown(resource.content);
-
-      let messages: string[] = [];
-      for (let part of parts) {
-        switch (part.type) {
-          case "text":
-            messages.push(part.text);
-            break;
-          case "transclusion":
-            const childUrl = new URL(part.url, url);
-            const childRef = childUrl.href;
-            dependencies.add(childRef);
-            const child = await this.start(childUrl, url);
-            const childContent = await child.complete;
-            messages.push(childContent);
-            break;
-          case "action":
-            // ignore
-            break;
-        }
-      }
+      const renderer = new Renderer(resource);
+      const ctx: RenderContext = {
+        needs: async (dep) => {
+          const childUrl = new URL(dep, url);
+          dependencies.add(childUrl.href);
+          const child = await this.start(childUrl, url);
+          return await child.complete;
+        },
+      };
+      const messages = await renderer.render(ctx);
 
       // Cleanup removed dependencies
       for (const dep of prevDependencies.difference(dependencies)) {
@@ -97,7 +86,7 @@ export default class ThingMananger {
       }
 
       let chunks = [];
-      for await (const chunk of this.model.stream(messages, signal)) {
+      for await (const chunk of this.model.stream([messages], signal)) {
         chunks.push(chunk);
       }
 

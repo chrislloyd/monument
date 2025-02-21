@@ -27,9 +27,7 @@ import * as Document from "./documents";
  * }
  * ```
  */
-export default function* markdown(
-  content: string,
-): Generator<Document.Fragment> {
+export default function* markdown(content: string): Document.Document {
   // Build regex for matching both transclusions (![]()) and actions ([]()):
   const markdownLinkRegex = new RegExp(
     [

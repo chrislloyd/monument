@@ -2,7 +2,7 @@ export type Text = { type: "text"; text: string };
 export type Transclusion = { type: "transclusion"; url: string; name: string };
 export type Action = { type: "action"; name: string; description: string };
 export type Fragment = Text | Transclusion | Action;
-export type Document = Fragment[];
+export type Document = Generator<Fragment>;
 
 export function text(text: string): Text {
   return { type: "text", text };
