@@ -2,7 +2,6 @@ import markdown from "./markdown";
 import { Signal } from "signal-polyfill";
 import type { Model } from "./models";
 import { AsyncComputed } from "signal-utils/async-computed";
-import Thing from "./Thing";
 import Loader from "./Loader";
 
 type Ref = string;
@@ -18,14 +17,20 @@ export default class ThingMananger {
   #documents: Map<Ref, Document> = new Map();
 
   constructor(
-    private model: Model,
-    private cwd: string,
-    private out: string,
+    private readonly model: Model,
+    private readonly cwd: string,
+    private readonly out: string,
   ) {}
 
-  async start(
+  async want(url: URL): Promise<Document["value"]> {
+    return await this.start(url, undefined);
+  }
+
+  // --
+
+  private async start(
     url: URL,
-    parent: URL | undefined = undefined,
+    parent: URL | undefined,
   ): Promise<Document["value"]> {
     let ref: Ref = url.href;
     let doc = this.#documents.get(ref);
@@ -41,9 +46,8 @@ export default class ThingMananger {
     const dependencies = new Set<Ref>();
     const parents = new Set<Ref>();
 
-    const thing = new Thing(url);
-
     const loader = new Loader(url);
+    // TODO: This needs to abort when ThingManager is disposed
     const abortController = new AbortController();
     const resourceGenerator = loader.load(abortController.signal);
 
@@ -61,7 +65,9 @@ export default class ThingMananger {
       this.stop(url.href, ref);
     })();
 
-    const value = new AsyncComputed(async () => {
+    // TODO: AsyncComputed doesn't actually abort the signal
+    // https://github.com/proposal-signals/signal-utils/issues/87
+    const valueSignal = new AsyncComputed(async (signal) => {
       const resource = resourceSignal.get();
 
       const prevDependencies = new Set(dependencies);
@@ -69,11 +75,11 @@ export default class ThingMananger {
 
       const parts = markdown(resource.content);
 
-      let output: string[] = [];
+      let messages: string[] = [];
       for (let part of parts) {
         switch (part.type) {
           case "text":
-            output.push(part.text);
+            messages.push(part.text);
             break;
           case "transclusion":
             const childUrl = new URL(part.url, url);
@@ -81,7 +87,7 @@ export default class ThingMananger {
             dependencies.add(childRef);
             const child = await this.start(childUrl, url);
             const childContent = await child.complete;
-            output.push(childContent);
+            messages.push(childContent);
             break;
           case "action":
             // ignore
@@ -94,11 +100,16 @@ export default class ThingMananger {
         this.stop(dep, ref);
       }
 
-      return output.join("");
+      let chunks = [];
+      for await (const chunk of this.model.stream(messages, signal)) {
+        chunks.push(chunk);
+      }
+
+      return chunks.join("");
     });
 
     doc = {
-      value: value,
+      value: valueSignal,
       dependencies: dependencies,
       watchAbortController: abortController,
       parents: parents,
@@ -109,7 +120,7 @@ export default class ThingMananger {
     return doc.value;
   }
 
-  stop(id: Ref, from: Ref) {
+  private stop(id: Ref, from: Ref) {
     const doc = this.#documents.get(id);
     if (!doc) throw new Error(`Unable to stop, document ${id} not found`);
 

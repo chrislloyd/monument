@@ -3,37 +3,26 @@ import path from "path";
 import { mkdir } from "node:fs/promises";
 import { glob } from "glob";
 import ThingMananger from "../src/ThingManager";
-import { openai, type Model } from "../src/models";
+import { openai } from "../src/models";
 import { effect } from "signal-utils/subtle/microtask-effect";
-import { AsyncComputed } from "signal-utils/async-computed";
 
 async function processFile(
   monument: ThingMananger,
   filePath: string,
   outputDir: string,
   inputDir: string,
-  model: Model,
 ) {
   const source = Bun.pathToFileURL(filePath);
-  const doc = await monument.start(source);
-
-  const ai = new AsyncComputed(async (signal) => {
-    const value = await doc.complete;
-    let chunks = [];
-    for await (const chunk of model.stream([value], signal)) {
-      chunks.push(chunk);
-    }
-    return chunks.join("");
-  });
+  const documentSignal = await monument.want(source);
 
   // Call out to
   effect(() => {
-    const chunks = ai.get();
-    if (!chunks) return;
+    const doc = documentSignal.get();
+    if (!doc) return;
 
     const relativePath = path.relative(inputDir, filePath);
     const outputPath = path.join(outputDir, relativePath);
-    Bun.file(outputPath).write(chunks);
+    Bun.file(outputPath).write(doc);
     console.log("*", outputPath);
   });
 }
@@ -90,7 +79,7 @@ async function main(argv: string[]) {
   });
 
   for (const file of files) {
-    processFile(monument, path.join(cwd, file), out, cwd, model);
+    processFile(monument, path.join(cwd, file), out, cwd);
   }
 }
 
