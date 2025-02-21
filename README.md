@@ -9,6 +9,7 @@
 
 ## TODO
 
+* [ ] Async queuing - fast resource events can prevent AsyncComputed from ever running
 * [ ] lazily depend on files that haven't been created yet (i.e. files in output dirs)
 * [ ] infinite loops (disallow recursive transcludes after x recursions?)
 * [ ] output chatgpt message format
