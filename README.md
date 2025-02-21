@@ -11,18 +11,16 @@
 
 * [ ] infinite loops (disallow recursive transcludes after x recursions?)
 * [ ] lazily depend on files that haven't been created yet (i.e. files in output dirs)
-* [ ] support http resources
-  * [ ] utc time from chislloyd.net/utc.md
-* [x] output chatgpt message format
+* [ ] output chatgpt message format
   * [ ] include image context
-  * [x] split at transclusions to give the model an extra hint as to sections
+  * [ ] split at transclusions to give the model an extra hint as to sections
 * [ ] markdown
-  * [ ] actions from links
-  * [ ] ignore comments
+  * [ ] ignore html comments <!-- -->
 * [ ] cli
   * [ ] narrow down file format/directory names. `.monument` for ai? Is intermediate `.txt` needed? customizable?
   * [ ] interactive repl. creates a new md document
 * [ ] actions
+  * [ ] actions from markdown links
 * [ ] hypertext
   * [ ] support iframe transclusion for html
   * [ ] actions from links/forms/buttons (ala. htmx)
@@ -31,9 +29,8 @@
   * [ ] vscode plugin?
   * [ ] obsidian plugin?
 * [ ] readme
-  * [ ] define transclusion
   * [ ] more examples for programming environment vs IDE
-  * [ ] more comparisons (Observable, Jupyter)
+  * [ ] more comparisons (Observable, Jupyter, WebApplets)
   * [ ] make relationship between documents and programs clearer
   * [ ] examples of what you can actually build
     * [ ] time zone converter
@@ -47,6 +44,9 @@
     * [ ] how does the reactive processing work?
     * [ ] what's the relationship between markdown files and execution
     * [ ] how do the various commands work together
+  * [x] define transclusion
+* [x] support http resources
+  * [x] utc time from chislloyd.net/utc.md
 
 ---
 

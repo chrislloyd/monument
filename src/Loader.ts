@@ -1,6 +1,6 @@
 import { watch } from "node:fs/promises";
 
-export async function* file(url: URL, signal: AbortSignal) {
+async function* file(url: URL, signal: AbortSignal) {
   async function read() {
     return Bun.file(url).text();
   }
@@ -26,26 +26,23 @@ export async function* file(url: URL, signal: AbortSignal) {
   }
 }
 
-export async function* http(url: URL, signal: AbortSignal) {
+async function* http(url: URL, signal: AbortSignal) {
   const response = await fetch(url, { signal });
   if (!response.ok) throw new Error(`HTTP Status: ${response.status}`);
   yield await response.text();
 }
 
 export default class Loader {
-  constructor(
-    private url: URL,
-    private signal: AbortSignal,
-  ) {}
+  constructor(private readonly url: URL) {}
 
-  async *load(): AsyncGenerator<string, void, void> {
+  async *load(signal: AbortSignal): AsyncGenerator<string, void, void> {
     switch (this.url.protocol) {
       case "file:":
-        yield* file(this.url, this.signal);
+        yield* file(this.url, signal);
         break;
       case "http:":
       case "https:":
-        yield* http(this.url, this.signal);
+        yield* http(this.url, signal);
         break;
       default:
         throw new Error(`Unsupported protocol: ${this.url.protocol}`);

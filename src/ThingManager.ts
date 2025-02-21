@@ -3,6 +3,7 @@ import { Signal } from "signal-polyfill";
 import type { Model } from "./models";
 import { AsyncComputed } from "signal-utils/async-computed";
 import Thing from "./Thing";
+import Loader from "./Loader";
 
 type Ref = string;
 
@@ -42,8 +43,9 @@ export default class ThingMananger {
 
     const thing = new Thing(url);
 
+    const loader = new Loader(url);
     const abortController = new AbortController();
-    const generator = thing.poll(abortController.signal);
+    const generator = loader.load(abortController.signal);
 
     const firstValue = await generator.next();
     if (!firstValue.value) throw new Error("Document generator didn't yield");
