@@ -6,7 +6,7 @@ import Loader from "./Loader";
 
 type Ref = string;
 
-type Document = {
+type Thing = {
   value: AsyncComputed<string>;
   watchAbortController: AbortController;
   dependencies: Set<Ref>;
@@ -14,11 +14,11 @@ type Document = {
 };
 
 export default class ThingMananger {
-  #documents: Map<Ref, Document> = new Map();
+  #things: Map<Ref, Thing> = new Map();
 
   constructor(private readonly model: Model) {}
 
-  async want(url: URL): Promise<Document["value"]> {
+  async want(url: URL): Promise<Thing["value"]> {
     return await this.start(url, undefined);
   }
 
@@ -27,16 +27,16 @@ export default class ThingMananger {
   private async start(
     url: URL,
     parent: URL | undefined,
-  ): Promise<Document["value"]> {
+  ): Promise<Thing["value"]> {
     let ref: Ref = url.href;
-    let doc = this.#documents.get(ref);
+    let thing = this.#things.get(ref);
 
-    // Upsert document
-    if (doc) {
+    // Upsert thing
+    if (thing) {
       if (parent) {
-        doc.parents.add(parent.href);
+        thing.parents.add(parent.href);
       }
-      return doc.value;
+      return thing.value;
     }
 
     const dependencies = new Set<Ref>();
@@ -104,21 +104,21 @@ export default class ThingMananger {
       return chunks.join("");
     });
 
-    doc = {
+    thing = {
       value: valueSignal,
       dependencies: dependencies,
       watchAbortController: abortController,
       parents: parents,
     };
 
-    this.#documents.set(ref, doc);
+    this.#things.set(ref, thing);
 
-    return doc.value;
+    return thing.value;
   }
 
   private stop(id: Ref, from: Ref) {
-    const doc = this.#documents.get(id);
-    if (!doc) throw new Error(`Unable to stop, document ${id} not found`);
+    const doc = this.#things.get(id);
+    if (!doc) throw new Error(`Unable to stop, ${id} not found`);
 
     doc.parents.delete(from);
 
@@ -127,7 +127,7 @@ export default class ThingMananger {
       for (const dep of doc.dependencies) {
         this.stop(dep, id);
       }
-      this.#documents.delete(id);
+      this.#things.delete(id);
     }
   }
 }
