@@ -16,11 +16,7 @@ type Document = {
 export default class ThingMananger {
   #documents: Map<Ref, Document> = new Map();
 
-  constructor(
-    private readonly model: Model,
-    private readonly cwd: string,
-    private readonly out: string,
-  ) {}
+  constructor(private readonly model: Model) {}
 
   async want(url: URL): Promise<Document["value"]> {
     return await this.start(url, undefined);

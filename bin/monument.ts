@@ -6,27 +6,6 @@ import ThingMananger from "../src/ThingManager";
 import { openai } from "../src/models";
 import { effect } from "signal-utils/subtle/microtask-effect";
 
-async function processFile(
-  monument: ThingMananger,
-  filePath: string,
-  outputDir: string,
-  inputDir: string,
-) {
-  const source = Bun.pathToFileURL(filePath);
-  const documentSignal = await monument.want(source);
-
-  // Call out to
-  effect(() => {
-    const doc = documentSignal.get();
-    if (!doc) return;
-
-    const relativePath = path.relative(inputDir, filePath);
-    const outputPath = path.join(outputDir, relativePath);
-    Bun.file(outputPath).write(doc);
-    console.log("*", outputPath);
-  });
-}
-
 async function main(argv: string[]) {
   const { values } = parseArgs({
     args: argv,
@@ -71,7 +50,7 @@ async function main(argv: string[]) {
 
   await mkdir(out, { recursive: true });
 
-  const monument = new ThingMananger(model, cwd, out);
+  const monument = new ThingMananger(model);
 
   const files = await glob("**/*.md", {
     cwd: cwd,
@@ -79,7 +58,15 @@ async function main(argv: string[]) {
   });
 
   for (const file of files) {
-    processFile(monument, path.join(cwd, file), out, cwd);
+    const source = Bun.pathToFileURL(path.join(cwd, file));
+    const target = Bun.pathToFileURL(path.join(out, file));
+    const documentSignal = await monument.want(source);
+    effect(() => {
+      const doc = documentSignal.get();
+      if (!doc) return;
+      Bun.file(target.pathname).write(doc);
+      console.log("*", target.pathname);
+    });
   }
 }
 
