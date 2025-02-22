@@ -14,3 +14,7 @@ Personal theories as to why transclusion isn't more popular:
 2. Lack of intrinsic sizing (unlike images where content size is embedded in headers)
 3. Hyperlinks are a [[Narrow Waist]]
 4. Tabs offer user controlled organisation rather than content controlled organisation
+
+---
+
+Monument interprets the Markdown image sytax (`![]()`) to mean "transclusion".

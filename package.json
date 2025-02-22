@@ -2,7 +2,7 @@
   "name": "monument",
   "private": true,
   "engines": {
-    "bun": ">=1.2.2"
+    "bun": "1.2.5"
   },
   "packageManager": "bun@1.2.2",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "bin": "bin/monument.ts",
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/bun": "1.2.5",
     "@types/marked": "^6.0.0"
   },
   "peerDependencies": {
