@@ -7,10 +7,9 @@ import Renderer, { type RenderContext } from "./Renderer";
 type Ref = string;
 
 type Thing = {
+  abortController: AbortController;
+  children: Set<Ref>;
   value: AsyncComputed<string>;
-  watchAbortController: AbortController;
-  dependencies: Set<Ref>;
-  parents: Set<Ref>;
 };
 
 export default class ThingMananger {
@@ -28,19 +27,18 @@ export default class ThingMananger {
     url: URL,
     parent: URL | undefined,
   ): Promise<Thing["value"]> {
+    if (parent && url.href === parent.href)
+      throw new Error(`Can't start from same url ${url.href}`);
+
     let ref: Ref = url.href;
     let thing = this.#things.get(ref);
 
     // Upsert thing
     if (thing) {
-      if (parent) {
-        thing.parents.add(parent.href);
-      }
       return thing.value;
     }
 
-    const dependencies = new Set<Ref>();
-    const parents = new Set<Ref>();
+    const children = new Set<Ref>();
 
     const loader = new Loader(url);
     // TODO: This needs to abort when ThingManager is disposed
@@ -58,7 +56,6 @@ export default class ThingMananger {
       for await (const resource of resourceGenerator) {
         resourceSignal.set(resource);
       }
-      this.stop(url.href, ref);
     })();
 
     // TODO: AsyncComputed doesn't actually abort the signal
@@ -66,14 +63,14 @@ export default class ThingMananger {
     const valueSignal = new AsyncComputed(async (signal) => {
       const resource = resourceSignal.get();
 
-      const prevDependencies = new Set(dependencies);
-      dependencies.clear();
+      const prevChildren = new Set(children);
+      children.clear();
 
       const renderer = new Renderer(resource);
       const ctx: RenderContext = {
         needs: async (dep) => {
           const childUrl = new URL(dep, url);
-          dependencies.add(childUrl.href);
+          children.add(childUrl.href);
           const child = await this.start(childUrl, url);
           return await child.complete;
         },
@@ -81,7 +78,7 @@ export default class ThingMananger {
       const messages = await renderer.render(ctx);
 
       // Cleanup removed dependencies
-      for (const dep of prevDependencies.difference(dependencies)) {
+      for (const dep of prevChildren.difference(children)) {
         this.stop(dep, ref);
       }
 
@@ -95,9 +92,8 @@ export default class ThingMananger {
 
     thing = {
       value: valueSignal,
-      dependencies: dependencies,
-      watchAbortController: abortController,
-      parents: parents,
+      children: children,
+      abortController: abortController,
     };
 
     this.#things.set(ref, thing);
@@ -105,15 +101,20 @@ export default class ThingMananger {
     return thing.value;
   }
 
-  private stop(id: Ref, from: Ref) {
-    const doc = this.#things.get(id);
-    if (!doc) throw new Error(`Unable to stop, ${id} not found`);
+  private stop(id: Ref, parentId: Ref) {
+    if (id === parentId) throw new Error("Can't stop from same id");
 
-    doc.parents.delete(from);
+    const thing = this.#things.get(id);
+    if (!thing) throw new Error(`Unable to stop, ${id} not found`);
 
-    if (doc.parents.size === 0) {
-      doc.watchAbortController.abort();
-      for (const dep of doc.dependencies) {
+    const parent = this.#things.get(parentId);
+    if (!parent) throw new Error(`Unable to stop, parent ${id} not found`);
+
+    parent.children.delete(id);
+
+    if (!this.#things.values().some((p) => p.children.has(id))) {
+      thing.abortController.abort();
+      for (const dep of thing.children) {
         this.stop(dep, id);
       }
       this.#things.delete(id);
