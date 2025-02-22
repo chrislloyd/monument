@@ -3,6 +3,7 @@ import type { Model } from "./models";
 import { AsyncComputed } from "signal-utils/async-computed";
 import Loader from "./Loader";
 import Renderer, { type RenderContext } from "./Renderer";
+import assert from "node:assert/strict";
 
 type Ref = string;
 
@@ -27,8 +28,8 @@ export default class ThingMananger {
     url: URL,
     parent: URL | undefined,
   ): Promise<Thing["value"]> {
-    if (parent && url.href === parent.href)
-      throw new Error(`Can't start from same url ${url.href}`);
+    if (parent)
+      assert.notEqual(url, parent, `Can't start from same url ${url.href}`);
 
     let ref: Ref = url.href;
     let thing = this.#things.get(ref);
@@ -48,8 +49,10 @@ export default class ThingMananger {
     // Wait for initial resource to load so we don't need to propagate a
     // potentially undefined value throughout the rest of the system.
     const initialResource = await resourceGenerator.next();
-    if (!initialResource.value)
-      throw new Error("Loader returned without yielding resoure");
+    assert.ok(
+      initialResource.value,
+      "Loader returned without yielding resoure",
+    );
 
     const resourceSignal = new Signal.State(initialResource.value);
     (async () => {
@@ -102,13 +105,13 @@ export default class ThingMananger {
   }
 
   private stop(id: Ref, parentId: Ref) {
-    if (id === parentId) throw new Error("Can't stop from same id");
+    assert.notEqual(id, parentId, "Can't stop from same id");
 
     const thing = this.#things.get(id);
-    if (!thing) throw new Error(`Unable to stop, ${id} not found`);
+    assert.ok(thing, `Unable to stop, ${id} not found`);
 
     const parent = this.#things.get(parentId);
-    if (!parent) throw new Error(`Unable to stop, parent ${id} not found`);
+    assert.ok(parent, `Unable to stop, parent ${parentId} not found`);
 
     parent.children.delete(id);
 

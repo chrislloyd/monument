@@ -1,5 +1,6 @@
 import { watch } from "node:fs/promises";
 import { type Resource } from "./resources";
+import assert from "node:assert/strict";
 
 async function* file(url: URL, signal: AbortSignal) {
   async function read() {
@@ -31,7 +32,7 @@ async function* file(url: URL, signal: AbortSignal) {
 async function* http(url: URL, signal: AbortSignal) {
   const defaultContentType = "text/plain";
   const response = await fetch(url, { signal });
-  if (!response.ok) throw new Error(`HTTP Status: ${response.status}`);
+  assert.ok(response.ok, `HTTP Status: ${response.status}`);
   const contentType =
     response.headers.get("Content-Type") || defaultContentType;
   yield { content: await response.text(), url, type: contentType };
