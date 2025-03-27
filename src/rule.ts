@@ -1,14 +1,23 @@
-import type { Id, Action } from "./build";
+import type { Action, ActionContext } from "./build";
 
 type Predicate<T> = (value: T) => boolean;
 
-export type Rule = { predicate: Predicate<Id>; fn: Action };
+export type Rule = { predicate: Predicate<URL>; fn: Action };
 
-export class Rules {
+export class RuleSet {
   #rules: Rule[] = [];
 
   rule(rule: Rule): void {
     this.#rules.push(rule);
+  }
+
+  file(glob: string, action: (context: ActionContext) => Promise<void>) {
+    this.rule({
+      predicate: (url) => new Bun.Glob(glob).match(url.pathname),
+      async fn(context) {
+        await action(context);
+      },
+    });
   }
 
   action(): Action {

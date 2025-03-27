@@ -5,24 +5,22 @@
  * storage.
  */
 import { type BunFile } from "bun";
-import { type Reference } from "./reference";
 
-export interface Storage<T, Ref extends Reference = Reference> {
-  get(ref: Ref): Promise<T | void>;
-  put(ref: Ref, object: T): Promise<void>;
+export interface Storage<T> {
+  get(ref: URL): Promise<T | void>;
+  put(ref: URL, object: T): Promise<void>;
 }
 
 // ---
 
-function keyFromReference(ref: Reference): string {
-  return `${ref.protocol}:${ref.path}`;
+function keyFromURL(url: URL): string {
+  return url.href;
 }
 
 // ---
 
 // This isn't thread-safe, but it's good enough for now.
 export class FileStorage<T> implements Storage<T> {
-  #cache = {};
   #file: BunFile;
 
   constructor(private readonly path: string) {
@@ -33,14 +31,14 @@ export class FileStorage<T> implements Storage<T> {
     await Bun.write(this.path, JSON.stringify({}), { createPath: true });
   }
 
-  async get(ref: Reference): Promise<T | void> {
-    const key = keyFromReference(ref);
+  async get(url: URL): Promise<T | void> {
+    const key = keyFromURL(url);
     const data = await this.#read();
     return data[key];
   }
 
-  async put(ref: Reference, object: T): Promise<void> {
-    const key = keyFromReference(ref);
+  async put(url: URL, object: T): Promise<void> {
+    const key = keyFromURL(url);
     const data = await this.#read();
     data[key] = object;
     await Bun.write(this.path, JSON.stringify(data), { createPath: true });
@@ -55,13 +53,13 @@ export class FileStorage<T> implements Storage<T> {
 // ---
 
 export class MemoryStorage<T> implements Storage<T> {
-  #data = new Map<ReturnType<typeof keyFromReference>, T>();
+  #data = new Map<ReturnType<typeof keyFromURL>, T>();
 
-  async get(ref: Reference): Promise<T | void> {
-    return this.#data.get(keyFromReference(ref));
+  async get(url: URL): Promise<T | void> {
+    return this.#data.get(keyFromURL(url));
   }
 
-  async put(ref: Reference, object: T): Promise<void> {
-    this.#data.set(keyFromReference(ref), object);
+  async put(url: URL, object: T): Promise<void> {
+    this.#data.set(keyFromURL(url), object);
   }
 }
