@@ -1,36 +1,40 @@
 import { expect, test } from "bun:test";
 
 import markdown from "./markdown";
-import * as Document from "./documents";
 
 test("text", () => {
-  const parts = Array.from(markdown("Hello, world!"));
-  expect(parts).toEqual([Document.text("Hello, world!")]);
+  const html = markdown("Hello, world!");
+  expect(html).toMatchInlineSnapshot(`
+    "<p>Hello, world!</p>
+    "
+  `);
 });
 
 test("transclusion", () => {
-  const parts = Array.from(markdown("![include](file.md)"));
-  expect(parts).toEqual([Document.transclusion("file.md", "include")]);
+  const html = markdown("![include](file.md)");
+  expect(html).toMatchInlineSnapshot(`
+    "<p><iframe src="file.md" frameborder="0" allowfullscreen></iframe></p>
+    "
+  `);
 });
 
 test("mixed", () => {
-  const parts = Array.from(markdown("Hello ![world](world.md)"));
-  expect(parts).toEqual([
-    Document.text("Hello "),
-    Document.transclusion("world.md", "world"),
-  ]);
+  const html = markdown("Hello ![world](world.md)");
+  expect(html).toMatchInlineSnapshot(`
+    "<p>Hello <iframe src="world.md" frameborder="0" allowfullscreen></iframe></p>
+    "
+  `);
 });
 
 test("multiple transclusions", () => {
-  const parts = Array.from(markdown("![one](one.md) ![two](two.md)"));
-  expect(parts).toEqual([
-    Document.transclusion("one.md", "one"),
-    Document.text(" "),
-    Document.transclusion("two.md", "two"),
-  ]);
+  const html = markdown("![one](one.md) ![two](two.md)");
+  expect(html).toMatchInlineSnapshot(`
+    "<p><iframe src="one.md" frameborder="0" allowfullscreen></iframe> <iframe src="two.md" frameborder="0" allowfullscreen></iframe></p>
+    "
+  `);
 });
 
-test.todo("transclusions in comments", () => {
-  const parts = Array.from(markdown("<!-- ![include](file.md) -->"));
-  expect(parts).toEqual([Document.text("<!-- ![include](file.md) -->")]);
+test("transclusions in comments", () => {
+  const html = markdown("<!-- ![include](file.md) -->");
+  expect(html).toMatchInlineSnapshot(`"<!-- ![include](file.md) -->"`);
 });

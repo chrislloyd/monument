@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+.editor-pane,
+.viewer-pane {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.editor-pane {
+    border-right: 1px solid #ccc;
+}
+
+.json-editor {
+    width: 100%;
+    font-family: monospace;
+    font-size: 14px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.error-message {
+    margin-top: 10px;
+    padding: 10px;
+    color: white;
+    background-color: #f44336;
+    border-radius: 4px;
+}
+
+.document-viewer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.fragment {
+    /* border: 1px solid #ddd; */
+    /* border-radius: 4px; */
+    /* overflow: hidden; */
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+}
+
+.fragment-header {
+    /* padding: 8px 12px; */
+    /* font-weight: bold; */
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+}
+
+.fragment-content {
+    padding: 12px;
+}
+
+.fragment-text {
+    background-color: #f9f9f9;
+}
+
+.fragment-image {
+    background-color: #f0f8ff;
+}
+
+.fragment-link {
+    background-color: #f0fff0;
+}
+
+.fragment-transclusion {
+    background-color: #fff0f5;
+}
+
+.fragment-action {
+    background-color: #fffff0;
+}
+
+.fragment-unknown,
+.fragment-error {
+    background-color: #ffebee;
+}
+
+.empty-document {
+    text-align: center;
+    padding: 20px;
+    color: #757575;
+    font-style: italic;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    /* background-color: #f5f5f5; */
+    padding: 8px;
+    border-radius: 4px;
+    margin: 5px 0;
+}

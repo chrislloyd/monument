@@ -1,8 +1,18 @@
 import { watch } from "node:fs/promises";
-import { type Resource } from "./resources";
-import type Loader from "./Loader";
+import { type Resource } from "./resource";
+import { type Loader } from "./loader";
+import type { Reference } from "./reference";
 
-async function* file(loader: Loader, url: URL, signal: AbortSignal) {
+export interface Watcher {
+  watch(
+    ref: Reference,
+    abortSignal: AbortSignal,
+  ): AsyncGenerator<Resource, void, void>;
+}
+
+// ---
+
+async function* file(loader: Loader, url: URL, abortSignal: AbortSignal) {
   yield await loader.load(url, signal);
   try {
     for await (const change of watch(url.pathname, { signal })) {
@@ -23,11 +33,11 @@ async function* file(loader: Loader, url: URL, signal: AbortSignal) {
   }
 }
 
-export default class Watcher {
+export class Watcher implements Watcher {
   constructor(private readonly loader: Loader) {}
   async *watch(
     url: URL,
-    signal: AbortSignal,
+    abortSignal: AbortSignal,
   ): AsyncGenerator<Resource, void, void> {
     switch (url.protocol) {
       case "file:":

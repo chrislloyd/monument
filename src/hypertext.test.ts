@@ -1,7 +1,7 @@
 import { describe, test } from "bun:test";
 import assert from "node:assert";
 import { hypertext } from "./hypertext";
-import { text, action, image, transclusion, link } from "./documents";
+import { text, action, image, transclusion, link } from "./hmc";
 
 describe(hypertext.name, () => {
   test("whitespace", () => {
