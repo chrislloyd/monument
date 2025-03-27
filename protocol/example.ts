@@ -1,4 +1,7 @@
-import debuggerHtml from "./debugger.html";
+import indexHtml from "./index.html";
+import debugHtml from "./debug.html";
+import buildHtml from "./build.html";
+import exploreHtml from "./explore.html";
 import { createMomumentServerHandler } from "./server";
 
 async function* clock(interval: number) {
@@ -12,7 +15,10 @@ async function* clock(interval: number) {
 
 Bun.serve({
   routes: {
-    "/": debuggerHtml,
+    "/": indexHtml,
+    "/debug": debugHtml,
+    "/explore": exploreHtml,
+    "/build": buildHtml,
     "/clock": createMomumentServerHandler(clock(2000)),
   },
 });

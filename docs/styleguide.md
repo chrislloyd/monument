@@ -1,5 +1,14 @@
 # Styleguide
 
+## TypeScript
+
+* Files are namespaces. Prefer singular names.
+* Export interfaces for most classes, especially if they deal with side effects
+or are platform specific.
+* Export classes that are used only in tests with `TestOnly` prefix.
+* use `// ---` separator comments liberally.
+* When writing a function to convert one type to another, prefer the form "xFromY".
+
 ## Tests
 
 * Prefer "test" to "spec" or "it".
