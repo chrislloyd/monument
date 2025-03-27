@@ -48,6 +48,11 @@
   * [x] define transclusion
 * [x] support http resources
   * [x] utc time from chislloyd.net/utc.md
+* [x] Tick clock when building
+* [x] Fix race condition
+* [x] Use Loader
+* [x] Add AbortSignal to build
+* [x] Figure out types for "Resolved Model Context" vs. "Model Context"
 
 ---
 

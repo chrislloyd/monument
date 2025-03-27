@@ -9,14 +9,14 @@ export class SystemClock implements Clock {
 }
 
 export class MonotonicClock implements Clock {
-  #t: number = 0;
+  constructor(private t: number = 0) {}
 
   now(): number {
-    return this.#t;
+    return this.t;
   }
 
   advance(n: number) {
-    this.#t += Math.max(0, n);
+    this.t += Math.max(0, n);
   }
 
   tick() {

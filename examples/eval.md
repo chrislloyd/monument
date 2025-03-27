@@ -8,4 +8,4 @@ and the answer:
 
 ![answer](out/question.md)
 
-Reply with either PASS or FAIL.
+Reply with either PASS or FAIL and a short sentence explaining why.
