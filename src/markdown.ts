@@ -1,6 +1,6 @@
 import { marked, type Tokens } from "marked";
 
-export default function markdown(content: string): string {
+export function markdown(content: string): string {
   // Define common image extensions
   const imageExtensions = [
     ".jpg",

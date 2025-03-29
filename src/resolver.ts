@@ -5,7 +5,6 @@ import {
 } from "./document";
 import { parse } from "./html";
 import type { Loader } from "./loader";
-import markdown from "./markdown";
 
 export interface Resolver {
   resolve(
@@ -50,8 +49,7 @@ export class Resolver implements Resolver {
 
             const blob = await this.loader.load(url, signal);
             const text = await blob.text();
-            const html = markdown(text);
-            const childHyperDoc = parse(url.href, html);
+            const childHyperDoc = { url: url.href, body: parse(text) };
 
             const childDoc = await this.resolve(childHyperDoc, signal);
             return childDoc.body;

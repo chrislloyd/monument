@@ -16,6 +16,13 @@ export class RuleSet {
       predicate: (url) => new Bun.Glob(glob).match(url.pathname),
       async fn(context) {
         await action(context);
+
+        const file = Bun.file(context.out);
+        if (!(await file.exists())) {
+          throw new Error(`Rule did not create file "${context.out}"`);
+        }
+        const stat = await file.stat();
+        return JSON.stringify({ mtimeMs: stat.mtimeMs });
       },
     });
   }

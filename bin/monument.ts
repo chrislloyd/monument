@@ -1,73 +1,55 @@
-import { parseArgs } from "util";
-import path from "path";
-import { mkdir } from "node:fs/promises";
-import { glob } from "glob";
-import ThingMananger from "../src/ThingManager";
-import { openai } from "../src/models";
-import { effect } from "signal-utils/subtle/microtask-effect";
+import { Run, type Status } from "../src/build";
+import { MonotonicClock } from "../src/clock";
+import { parse } from "../src/html";
+import { markdown } from "../src/markdown";
+import { OpenAiModel } from "../src/model";
+import { Resolver } from "../src/resolver";
+import { RuleSet } from "../src/rule";
+import { FileStorage } from "../src/storage";
+import { Loader } from "../src/loader";
 
 async function main(argv: string[]) {
-  const { values } = parseArgs({
-    args: argv,
-    options: {
-      directory: {
-        type: "string",
-        default: ".",
-        required: true,
-      },
-      "output-directory": {
-        type: "string",
-        required: true,
-      },
-      "api-key": {
-        type: "string",
-        default: process.env["OPENAI_API_KEY"],
-        required: true,
-      },
-      model: {
-        type: "string",
-        default: "gpt-4o-mini",
-        required: true,
-      },
-    },
-    strict: true,
-    allowPositionals: true,
+  const abortController = new AbortController();
+  const clock = new MonotonicClock(Date.now());
+  const loader = new Loader();
+  const ruleset = new RuleSet();
+
+  // out/*.md -> out/*.hmd
+  ruleset.file("**/out/*.md", async (context) => {
+    const inputUrl = new URL(
+      context.out.href.replace(/out\/([^/]+)\.md/, "$1.md"),
+    );
+    await context.need(inputUrl);
+
+    const md = await loader.load(inputUrl, context.signal);
+    const text = await md.text();
+    const hmd = { url: inputUrl.href, body: parse(text) };
+    const resolver = new Resolver(loader, context.need);
+    const mc = await resolver.resolve(hmd, context.signal);
+    const model = new OpenAiModel("gpt-4o-mini", Bun.env["OPENAI_API_KEY"]!);
+    const chunks = await Array.fromAsync(model.stream(mc, context.signal));
+
+    await Bun.write(context.out, chunks.join(""));
   });
 
-  if (!values["output-directory"]) {
-    console.error("Error: --output-directory is required");
-    process.exit(1);
-  }
+  ruleset.file("**", () => {});
 
-  if (!values["api-key"]) {
-    console.error("Error: --api-key is required");
-    process.exit(1);
-  }
+  // --
 
-  const model = openai(values["model"], values["api-key"]);
-  const cwd = path.resolve(values["directory"]);
-  const out = path.resolve(values["output-directory"]);
+  const db = Bun.file("db.json");
+  if (await db.exists()) await db.delete();
 
-  await mkdir(out, { recursive: true });
+  const path = argv[2];
+  if (!path) throw new Error();
 
-  const monument = new ThingMananger(model);
+  const storage = new FileStorage<Status>("db.json");
+  await storage.create();
 
-  const files = await glob("**/*.md", {
-    cwd: cwd,
-    ignore: path.join(out, "**"),
-  });
+  const run = new Run(clock, ruleset.action(), storage, abortController.signal);
+  const url = Bun.pathToFileURL(path);
+  await run.need(url);
 
-  for (const file of files) {
-    const source = Bun.pathToFileURL(path.join(cwd, file));
-    const target = Bun.pathToFileURL(path.join(out, file));
-    const documentSignal = await monument.want(source);
-    effect(() => {
-      const doc = documentSignal.get();
-      if (!doc) return;
-      Bun.file(target.pathname).write(doc);
-      console.log("*", target.pathname);
-    });
-  }
+  console.log(await Bun.file(url).text());
 }
 
-main(Bun.argv);
+await main(Bun.argv);

@@ -1,9 +1,11 @@
-import { type HyperModelDocument, type HyperFragment } from "./document";
 import * as parse5 from "parse5";
+import { type HyperFragment, type HyperModelDocument } from "./document";
+import { markdown } from "./markdown";
 
-export function parse(url: string, html: string): HyperModelDocument {
+export function parse(input: string): HyperModelDocument["body"] {
+  const html = markdown(input);
   const document = parse5.parseFragment(html);
-  return { url, body: Array.from(traverseNodes(document.childNodes)) };
+  return Array.from(traverseNodes(document.childNodes));
 }
 
 function* traverseNodes(nodes: any[]): Generator<HyperFragment> {
