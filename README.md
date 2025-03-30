@@ -9,21 +9,15 @@
 
 ## TODO
 
-* [ ] Async queuing - fast resource events can prevent AsyncComputed from ever running
-* [ ] lazily depend on files that haven't been created yet (i.e. files in output dirs)
+* [ ] caching
 * [ ] infinite loops (disallow recursive transcludes after x recursions?)
-* [ ] output chatgpt message format
-  * [ ] include image context
-  * [ ] split at transclusions to give the model an extra hint as to sections
-* [ ] markdown
-  * [ ] ignore html comments <!-- -->
 * [ ] cli
   * [ ] narrow down file format/directory names. `.monument` for ai? Is intermediate `.txt` needed? customizable?
   * [ ] interactive repl. creates a new md document
 * [ ] actions
   * [ ] actions from markdown links
 * [ ] hypertext
-  * [ ] support iframe transclusion for html
+  * [x] support iframe transclusion for html
   * [ ] actions from links/forms/buttons (ala. htmx)
   * [ ] how to run local http server to expose system state? (filesystem, contacts etc.) how can this be extensible? MCP?
 * [ ] UI
@@ -31,7 +25,7 @@
   * [ ] obsidian plugin?
 * [ ] readme
   * [ ] more examples for programming environment vs IDE
-  * [ ] more comparisons (Observable, Jupyter, WebApplets)
+  * [ ] more comparisons (Observable, Jupyter, WebApplets, MCP)
   * [ ] make relationship between documents and programs clearer
   * [ ] examples of what you can actually build
     * [ ] time zone converter
@@ -53,6 +47,13 @@
 * [x] Use Loader
 * [x] Add AbortSignal to build
 * [x] Figure out types for "Resolved Model Context" vs. "Model Context"
+* [x] lazily depend on files that haven't been created yet (i.e. files in output dirs)
+* [x] markdown
+  * [x] ignore html comments <!-- -->
+* [x] output chatgpt message format
+  * [x] include image context
+  * [x] split at transclusions to give the model an extra hint as to sections
+* [x] Async queuing - fast resource events can prevent AsyncComputed from ever running
 
 ---
 

@@ -1,12 +1,11 @@
 import { Run, type Status } from "../src/build";
 import { MonotonicClock } from "../src/clock";
 import { parse } from "../src/html";
-import { markdown } from "../src/markdown";
+import { Loader } from "../src/loader";
 import { OpenAiModel } from "../src/model";
 import { Resolver } from "../src/resolver";
 import { RuleSet } from "../src/rule";
 import { FileStorage } from "../src/storage";
-import { Loader } from "../src/loader";
 
 async function main(argv: string[]) {
   const abortController = new AbortController();
@@ -32,7 +31,7 @@ async function main(argv: string[]) {
     await Bun.write(context.out, chunks.join(""));
   });
 
-  ruleset.file("**", () => {});
+  ruleset.file("**", async () => {});
 
   // --
 

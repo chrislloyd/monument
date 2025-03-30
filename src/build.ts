@@ -110,7 +110,7 @@ export class Run {
         throw status.error;
 
       case StatusType.READY:
-        if (await this.#isValid(id)) {
+        if (await this.#isValid(status)) {
           return status.result.value;
         } else {
           return await this.#build(id);
@@ -191,11 +191,9 @@ export class Run {
     return JSON.stringify(prev) !== JSON.stringify(next);
   }
 
-  async #isValid(key: Id): Promise<boolean> {
-    const status = await getWhereReady(this.#database, key);
-    if (!status) {
-      return false;
-    }
+  async #isValid(
+    status: Status & { type: StatusType.READY },
+  ): Promise<boolean> {
     const depStatuses = await Promise.all(
       status.result.depends
         .flatMap((deps) => deps)
