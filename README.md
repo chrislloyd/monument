@@ -10,6 +10,7 @@
 ## TODO
 
 * [ ] caching
+* [ ] sqlite storage
 * [ ] infinite loops (disallow recursive transcludes after x recursions?)
 * [ ] cli
   * [ ] narrow down file format/directory names. `.monument` for ai? Is intermediate `.txt` needed? customizable?

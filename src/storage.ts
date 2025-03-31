@@ -6,15 +6,11 @@
  */
 import { type BunFile } from "bun";
 
+type Ref = string;
+
 export interface Storage<T> {
-  get(ref: URL): Promise<T | void>;
-  put(ref: URL, object: T): Promise<void>;
-}
-
-// ---
-
-function keyFromURL(url: URL): string {
-  return url.href;
+  get(ref: Ref): Promise<T | void>;
+  put(ref: Ref, object: T): Promise<void>;
 }
 
 // ---
@@ -31,16 +27,14 @@ export class FileStorage<T> implements Storage<T> {
     await Bun.write(this.path, JSON.stringify({}), { createPath: true });
   }
 
-  async get(url: URL): Promise<T | void> {
-    const key = keyFromURL(url);
+  async get(ref: Ref): Promise<T | void> {
     const data = await this.#read();
-    return data[key];
+    return data[ref];
   }
 
-  async put(url: URL, object: T): Promise<void> {
-    const key = keyFromURL(url);
+  async put(ref: Ref, object: T): Promise<void> {
     const data = await this.#read();
-    data[key] = object;
+    data[ref] = object;
     await Bun.write(this.path, JSON.stringify(data), { createPath: true });
   }
 
@@ -53,13 +47,13 @@ export class FileStorage<T> implements Storage<T> {
 // ---
 
 export class MemoryStorage<T> implements Storage<T> {
-  #data = new Map<ReturnType<typeof keyFromURL>, T>();
+  #data = new Map<Ref, T>();
 
-  async get(url: URL): Promise<T | void> {
-    return this.#data.get(keyFromURL(url));
+  async get(ref: Ref): Promise<T | void> {
+    return this.#data.get(ref);
   }
 
-  async put(url: URL, object: T): Promise<void> {
-    this.#data.set(keyFromURL(url), object);
+  async put(ref: Ref, object: T): Promise<void> {
+    this.#data.set(ref, object);
   }
 }

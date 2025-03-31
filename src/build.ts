@@ -6,10 +6,6 @@ type RunId = ReturnType<Clock["now"]>;
 
 type Id = string;
 
-function urlFromId(id: Id): URL {
-  return new URL(id);
-}
-
 function idFromUrl(url: URL): Id {
   return url.href;
 }
@@ -25,7 +21,7 @@ type Result = {
   depends: Id[][];
 };
 
-enum StatusType {
+export enum StatusType {
   LOADED,
   RUNNING,
   FAILED,
@@ -43,8 +39,7 @@ async function getWhereReady(
   database: Storage<Status>,
   id: Id,
 ): Promise<(Status & { type: StatusType.READY }) | undefined> {
-  const url = urlFromId(id);
-  const status = await database.get(url);
+  const status = await database.get(id);
   if (status?.type !== StatusType.READY) {
     return undefined;
   }
@@ -91,15 +86,15 @@ export class Run {
       return result?.value;
     }
 
-    const status = await this.#database.get(urlFromId(id));
+    const status = await this.#database.get(id);
 
     if (!status) {
-      return await this.#build(id);
+      return await this.#build(url, id, undefined);
     }
 
     switch (status.type) {
       case StatusType.LOADED: {
-        return await this.#build(id);
+        return await this.#build(url, id, status);
       }
 
       case StatusType.RUNNING: {
@@ -113,7 +108,7 @@ export class Run {
         if (await this.#isValid(status)) {
           return status.result.value;
         } else {
-          return await this.#build(id);
+          return await this.#build(url, id, status);
         }
 
       default:
@@ -125,27 +120,34 @@ export class Run {
     return await Promise.all(keys.map((key) => this.need(key)));
   }
 
-  async #build(id: Id): Promise<Value> {
-    const url = urlFromId(id);
+  async #build(
+    url: URL,
+    id: Id,
+    prevStatus: Status | undefined,
+  ): Promise<Value> {
     try {
-      const promise = this.#run(id);
+      const promise = this.#run(url, id, prevStatus);
       this.#running.set(id, promise);
-      await this.#database.put(url, { type: StatusType.RUNNING });
+      await this.#database.put(id, { type: StatusType.RUNNING });
       const result = await promise;
-      await this.#database.put(url, { type: StatusType.READY, result });
+      await this.#database.put(id, { type: StatusType.READY, result });
       return result.value;
     } catch (error) {
-      await this.#database.put(url, { type: StatusType.FAILED, error });
+      await this.#database.put(id, { type: StatusType.FAILED, error });
       throw error;
     } finally {
       this.#running.delete(id);
     }
   }
 
-  async #run(id: Id): Promise<Result> {
+  async #run(
+    url: URL,
+    id: Id,
+    prevStatus: Status | undefined,
+  ): Promise<Result> {
     const depends: Id[][] = [];
     const context: ActionContext = {
-      out: urlFromId(id),
+      out: url,
       need: async (dep: URL) => {
         const depId = idFromUrl(dep);
         if (id === depId) {
@@ -164,9 +166,6 @@ export class Run {
       },
       signal: this.#signal,
     };
-
-    const url = urlFromId(id);
-    const prevStatus = await this.#database.get(url);
 
     const value = await this.#action(context);
 
