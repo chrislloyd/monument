@@ -6,10 +6,6 @@ type RunId = ReturnType<Clock["now"]>;
 
 type Id = string;
 
-function idFromUrl(url: URL): Id {
-  return url.href;
-}
-
 type Value = unknown;
 
 // The result of a build, along with the full list of dependencies. built and
@@ -35,19 +31,6 @@ export type Status =
   | { type: StatusType.FAILED; error: unknown }
   | { type: StatusType.READY; result: Result };
 
-async function getWhereReady(
-  database: Storage<Status>,
-  id: Id,
-): Promise<(Status & { type: StatusType.READY }) | undefined> {
-  const status = await database.get(id);
-  if (status?.type !== StatusType.READY) {
-    return undefined;
-  }
-  return status;
-}
-
-// --
-
 export type ActionContext = {
   out: URL;
   need(dep: URL): Promise<void>;
@@ -58,6 +41,21 @@ export type ActionContext = {
 export type Action = (context: ActionContext) => Promise<unknown>;
 
 // --
+
+function idFromUrl(url: URL): Id {
+  return url.href;
+}
+
+async function getWhereReady(
+  database: Storage<Status>,
+  id: Id,
+): Promise<(Status & { type: StatusType.READY }) | undefined> {
+  const status = await database.get(id);
+  if (status?.type !== StatusType.READY) {
+    return undefined;
+  }
+  return status;
+}
 
 export class Run {
   private readonly id: RunId;
