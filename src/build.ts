@@ -62,7 +62,7 @@ export class Run {
   #action: Action;
   #database: Storage<Status>;
   #signal: AbortSignal;
-  #running: Map<Id, Promise<Result>> = new Map();
+  #running: Map<Id, Promise<Value>> = new Map();
 
   constructor(
     clock: Clock,
@@ -80,19 +80,18 @@ export class Run {
     const id = idFromUrl(url);
 
     if (this.#running.has(id)) {
-      const result = await this.#running.get(id);
-      return result?.value;
+      return await this.#running.get(id);
     }
 
     const status = await this.#database.get(id);
 
     if (!status) {
-      return await this.#build(url, id, undefined);
+      return await this.#build(url, undefined);
     }
 
     switch (status.type) {
       case StatusType.LOADED: {
-        return await this.#build(url, id, status);
+        return await this.#build(url, status);
       }
 
       case StatusType.RUNNING: {
@@ -106,7 +105,7 @@ export class Run {
         if (await this.#isValid(status)) {
           return status.result.value;
         } else {
-          return await this.#build(url, id, status);
+          return await this.#build(url, status);
         }
 
       default:
@@ -118,70 +117,64 @@ export class Run {
     return await Promise.all(keys.map((key) => this.need(key)));
   }
 
-  async #build(
-    url: URL,
-    id: Id,
-    prevStatus: Status | undefined,
-  ): Promise<Value> {
+  async #build(url: URL, prevStatus: Status | undefined): Promise<Value> {
+    const id = idFromUrl(url);
     try {
-      const promise = this.#run(url, id, prevStatus);
+      // Before
+      const depends: Id[][] = [];
+      const context: ActionContext = {
+        out: url,
+        need: async (dep: URL) => {
+          const depId = idFromUrl(dep);
+          if (id === depId) {
+            throw new Error(`Self-dependency: ${id} depeneds on itself`);
+          }
+          depends.push([depId]);
+          await this.need(dep);
+        },
+        needN: async (deps: URL[]) => {
+          const depIds = deps.map((dep) => idFromUrl(dep));
+          if (depIds.some((depId) => id === depId)) {
+            throw new Error(`Self-dependency: ${id} depeneds on itself`);
+          }
+          depends.push(depIds);
+          await this.needN(deps);
+        },
+        signal: this.#signal,
+      };
+
+      const promise = this.#action(context);
       this.#running.set(id, promise);
       await this.#database.put(id, { type: StatusType.RUNNING });
-      const result = await promise;
+
+      // Run
+
+      const value = await promise;
+
+      // After
+
+      let changed = this.id;
+      if (
+        prevStatus &&
+        prevStatus.type === StatusType.READY &&
+        !Run.#hasChanged(prevStatus.result.value, value)
+      ) {
+        changed = prevStatus.result.changed;
+      }
+      const result = {
+        value,
+        built: this.id,
+        changed,
+        depends,
+      };
       await this.#database.put(id, { type: StatusType.READY, result });
-      return result.value;
+      return value;
     } catch (error) {
       await this.#database.put(id, { type: StatusType.FAILED, error });
       throw error;
     } finally {
       this.#running.delete(id);
     }
-  }
-
-  async #run(
-    url: URL,
-    id: Id,
-    prevStatus: Status | undefined,
-  ): Promise<Result> {
-    const depends: Id[][] = [];
-    const context: ActionContext = {
-      out: url,
-      need: async (dep: URL) => {
-        const depId = idFromUrl(dep);
-        if (id === depId) {
-          throw new Error(`Self-dependency: ${id} depeneds on itself`);
-        }
-        depends.push([depId]);
-        await this.need(dep);
-      },
-      needN: async (deps: URL[]) => {
-        const depIds = deps.map((dep) => idFromUrl(dep));
-        if (depIds.some((depId) => id === depId)) {
-          throw new Error(`Self-dependency: ${id} depeneds on itself`);
-        }
-        depends.push(depIds);
-        await this.needN(deps);
-      },
-      signal: this.#signal,
-    };
-
-    const value = await this.#action(context);
-
-    let changed = this.id;
-    if (
-      prevStatus &&
-      prevStatus.type === StatusType.READY &&
-      !Run.#hasChanged(prevStatus.result.value, value)
-    ) {
-      changed = prevStatus.result.changed;
-    }
-
-    return {
-      value,
-      built: this.id,
-      changed,
-      depends,
-    };
   }
 
   static #hasChanged(prev: Value, next: Value): boolean {
