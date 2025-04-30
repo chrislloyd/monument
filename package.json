@@ -2,7 +2,7 @@
   "name": "monument",
   "private": true,
   "engines": {
-    "bun": "1.2.5"
+    "bun": "1.2.11"
   },
   "packageManager": "bun@1.2.2",
   "scripts": {
@@ -13,7 +13,7 @@
     "@types/parse5": "^7.0.0",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
-    "@types/bun": "1.2.5",
+    "@types/bun": "1.2.11",
     "@types/glob": "^8.1.0",
     "@types/marked": "^6.0.0"
   },
