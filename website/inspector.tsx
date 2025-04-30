@@ -375,13 +375,44 @@ export function Inspector({
   );
 }
 
+// Function to extract URLs from markdown image syntax
+function extractImageUrlsFromMarkdown(text: string): Set<string> {
+  const regex = /!\[.*?\]\((.*?)\)/g;
+  const urls: string[] = [];
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match[1] && match[1].trim()) {
+      urls.push(match[1].trim());
+    }
+  }
+
+  return new Set(urls);
+}
+
 const queryClient = new QueryClient();
 
+const EXAMPLE = `It is currently ![](https://chrislloyd.net/utc.md).
+
+What time is it in Sydney? Time only.
+`;
+
 function App() {
+  const [text, setText] = useState("");
+  const urls = extractImageUrlsFromMarkdown(text);
   return (
     <QueryClientProvider client={queryClient}>
       <div className="container mx-auto p-10">
-        <Inspector home="https://chrislloyd.net/utc.md" />
+        <button onClick={() => setText(EXAMPLE)}>Example</button>
+        <textarea
+          className="w-full border p-2 font-mono"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={5}
+        />
+        {Array.from(urls).map((url) => (
+          <Inspector key={url} home={url} />
+        ))}
       </div>
     </QueryClientProvider>
   );
