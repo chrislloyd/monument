@@ -1,9 +1,5 @@
 import * as parse5 from "parse5";
-import {
-  type Fragment,
-  type HyperFragment,
-  type HyperModelDocument,
-} from "./document";
+import { type HyperFragment, type HyperModelDocument } from "./document";
 import { markdown } from "./markdown";
 
 export function parseHtml(html: string): HyperModelDocument["body"] {

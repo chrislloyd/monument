@@ -1,0 +1,89 @@
+<!doctype html>
+<html
+    lang="en"
+    class="font-sans leading-relaxed text-stone-800 bg-white dark:bg-stone-800 dark:text-white"
+>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <style type="text/tailwindcss">
+            @theme {
+                --font-sans: Avenir, Montserrat, Corbel, URW Gothic,
+                    source-sans-pro, sans-serif;
+            }
+
+            @layer components {
+                .monument {
+                    font-weight: bold;
+                }
+
+                .link {
+                    text-decoration: underline;
+                }
+            }
+        </style>
+    </head>
+    <body class="md:w-1/2 p-6">
+        <h1 class="text-3xl mb-[1lh] monument">Monument</h1>
+        <ul class="list-disc pl-6 mb-[1lh]">
+            <li>
+                <a href="./try.html" class="link">Try it out</a>
+            </li>
+            <li>
+                <a
+                    href="https://github.com/chrislloyd/monument/commits"
+                    class="link"
+                    >Latest updates</a
+                >
+            </li>
+            <li>
+                <a href="https://github.com/chrislloyd/monument" class="link"
+                    >Source code</a
+                >
+            </li>
+        </ul>
+        <p class="mb-[1lh]">
+            <span class="monument">Monument</span>
+            is a study in building a programming environment from the ground up
+            for AI. Our current operating systems are based around files,
+            processes, buttons. AI uses tokens, tools and Markdown.
+        </p>
+        <p class="mb-[1lh]">
+            What is a &quot;programming environment&quot;? It&#x27;s not VSCode.
+            It&#x27;s closer to
+            <a href="https://en.wikipedia.org/wiki/Lisp_machine" class="link"
+                >LISP machines</a
+            >
+            , the
+            <a href="https://en.wikipedia.org/wiki/Canon_Cat" class="link"
+                >Canon Cat</a
+            >
+            or
+            <a
+                href="https://dynamicland.org/2024/FAQ/#What_do_you_mean_by_dynamic_medium"
+                class="link"
+                >Dynamicland</a
+            >
+            .
+            <a href="https://cursor.com" class="link">Cursor</a>
+            and
+            <a href="https://github.com/features/copilot" class="link"
+                >Copilot</a
+            >
+
+            are useful additions to today&#x27;s dead (as in
+            <a href="https://www.youtube.com/watch?v=ZfytHvgHybA" class="link"
+                >the opposite of live</a
+            >
+            ) programming environments because they only involve editing code
+            and not any actual execution. A programming environment (by my
+            definition) is both live (in that it involves dynamic execution) and
+            malleable (you can edit it while it runs).
+        </p>
+        <p class="mb-[1lh]">
+            If all of this sounds lofty and grand - please be kind and learn
+            from my mistakes. ✌️
+        </p>
+    </body>
+</html>
