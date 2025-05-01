@@ -20,9 +20,9 @@ async function main(argv: string[]) {
     );
     await context.need(inputUrl);
 
-    const md = await loader.load(inputUrl, context.signal);
-    const text = await md.text();
-    const hmd = { url: inputUrl.href, body: parse(text) };
+    const blob = await loader.load(inputUrl, context.signal);
+    const body = await parse(blob);
+    const hmd = { url: inputUrl.href, body };
     const resolver = new Resolver(loader, context.need);
     const mc = await resolver.resolve(hmd, context.signal);
     const model = new OpenAiModel("gpt-4o-mini", Bun.env["OPENAI_API_KEY"]!);

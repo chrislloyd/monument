@@ -6,6 +6,10 @@ import {
 import { parse } from "./html";
 import type { Loader } from "./loader";
 
+/**
+ * Takes a HyperModelDocument and returns a ModelDocument. The goal is to
+ * "resolve" any hyper-ness (transclusions, links etc.) into the final document * that can be sent to the model.
+ */
 export interface Resolver {
   resolve(
     hyperModelDocument: HyperModelDocument,
@@ -48,8 +52,8 @@ export class Resolver implements Resolver {
             await this.cb(url);
 
             const blob = await this.loader.load(url, signal);
-            const text = await blob.text();
-            const childHyperDoc = { url: url.href, body: parse(text) };
+            const body = await parse(blob);
+            const childHyperDoc = { url: url.href, body };
 
             const childDoc = await this.resolve(childHyperDoc, signal);
             return childDoc.body;

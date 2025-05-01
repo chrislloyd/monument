@@ -2,6 +2,21 @@ import * as parse5 from "parse5";
 import { type HyperFragment, type HyperModelDocument } from "./document";
 import { markdown } from "./markdown";
 
+export async function parse(blob: Blob): Promise<HyperModelDocument["body"]> {
+  switch (blob.type) {
+    case "text/html": {
+      const text = await blob.text();
+      return parseHtml(text);
+    }
+    case "text/markdown": {
+      const text = await blob.text();
+      return parseMarkdown(text);
+    }
+    default:
+      throw new Error(`Unsupported content type: ${blob.type}`);
+  }
+}
+
 export function parseHtml(html: string): HyperModelDocument["body"] {
   const document = parse5.parseFragment(html);
   return traverse(document.childNodes);
@@ -52,6 +67,18 @@ function process(
     }
 
     case "li": {
+      return [];
+    }
+
+    case "iframe": {
+      return [
+        {
+          type: "transclusion",
+          description: element.attrs.find((attr) => attr.name === "title")
+            ?.value,
+          url: element.attrs.find((attr) => attr.name === "src")?.value!,
+        },
+      ];
     }
   }
 

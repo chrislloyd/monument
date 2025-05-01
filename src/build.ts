@@ -127,7 +127,7 @@ export class Run {
         need: async (dep: URL) => {
           const depId = idFromUrl(dep);
           if (id === depId) {
-            throw new Error(`Self-dependency: ${id} depeneds on itself`);
+            throw new Error(`Self-dependency: ${id} depends on itself`);
           }
           depends.push([depId]);
           await this.need(dep);
@@ -135,7 +135,7 @@ export class Run {
         needN: async (deps: URL[]) => {
           const depIds = deps.map((dep) => idFromUrl(dep));
           if (depIds.some((depId) => id === depId)) {
-            throw new Error(`Self-dependency: ${id} depeneds on itself`);
+            throw new Error(`Self-dependency: ${id} depends on itself`);
           }
           depends.push(depIds);
           await this.needN(deps);
