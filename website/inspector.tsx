@@ -1,28 +1,28 @@
 "use client";
 
 import {
-  Fragment,
-  type ReactNode,
-  useEffect,
-  useRef,
-  useState,
-  StrictMode,
-  useCallback,
-  use,
-} from "react";
-import {
   QueryClient,
   QueryClientProvider,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import {
+  Fragment,
+  StrictMode,
+  use,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createRoot } from "react-dom/client";
-import { parseHtml } from "../src/html";
-import * as doc from "../src/document";
-import { ModelProvider, useModel } from "./model";
+import { Action, Run, type Status } from "../src/build";
 import { MonotonicClock } from "../src/clock";
+import * as doc from "../src/document";
+import { parseHtml } from "../src/html";
 import { MemoryStorage } from "../src/storage";
-import { Run, Status, type Action } from "../src/build";
+import { ModelProvider, useModel } from "./model";
 
 type Value = {
   id: string;
@@ -396,11 +396,13 @@ function Output({ promise }: { promise: Promise<string[]> }) {
 }
 
 function App() {
+  const abortController = useRef(new AbortController());
+  const clock = useRef(new MonotonicClock(0));
   const [text, setText] = useState("");
   const [promise, setPromise] = useState<Promise<string[]> | null>(null);
   const model = useModel();
-  const handleRun = useCallback(() => {
-    const abortController = new AbortController();
+
+  const action = useCallback<Action>(() => {
     const doc: doc.ModelDocument = {
       body: [
         {
@@ -409,25 +411,31 @@ function App() {
         },
       ],
     };
+    return Array.fromAsync(model.stream(doc, abortController.current.signal));
+  }, [text, abortController]);
 
-    const clock = new MonotonicClock(Date.now());
-    const action: Action = async () => {
-      return Array.fromAsync(model.stream(doc, abortController.signal));
-    };
+  const handleRun = useCallback(() => {
     const storage = new MemoryStorage<Status>();
-    const run = new Run(clock, action, storage, abortController.signal);
+    const run = new Run(
+      clock.current,
+      action,
+      storage,
+      abortController.current.signal,
+    );
     const url = new URL(window.location.href);
     setPromise(
       run.need(url).then((thing) => {
+        clock.current.tick();
         return thing as string[];
       }),
     );
-  }, [text, setPromise]);
+  }, [clock, action, setPromise]);
   return (
     <div className="p-6">
       <Toolbar>
         <button onClick={() => setText(EXAMPLE)}>Load example</button>
         <button onClick={() => handleRun()}>Run</button>
+        <div>t = {clock.current.now()}</div>
       </Toolbar>
       <div className="grid grid-cols-2">
         <div className="h-full">
