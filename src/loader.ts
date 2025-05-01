@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+import * as assert from "./assert";
 
 export interface Loader {
   load(url: URL, signal: AbortSignal): Promise<Blob>;

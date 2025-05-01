@@ -7,6 +7,8 @@ import {
   useRef,
   useState,
   StrictMode,
+  useCallback,
+  use,
 } from "react";
 import {
   QueryClient,
@@ -17,6 +19,7 @@ import {
 import { createRoot } from "react-dom/client";
 import { parseHtml } from "../src/html";
 import * as doc from "../src/document";
+import { ModelProvider, useModel } from "./model";
 
 type Value = {
   id: string;
@@ -156,7 +159,7 @@ function bytes(str: string): number {
 
 function History({ history }: { history: Value[] }) {
   return (
-    <div className="h-[10rem] p-4 bg-neutral-800 text-white overflow-hidden overflow-y-auto">
+    <div className="h-[10rem] p-4 bg-stone-800 text-white overflow-hidden overflow-y-auto">
       <div className="grid grid-cols-[max-content_max-content_max-content_auto] gap-2">
         <div className="text-xs text-neutral-400">Time</div>
         <div className="text-xs text-neutral-400">TTL</div>
@@ -186,8 +189,10 @@ function History({ history }: { history: Value[] }) {
   );
 }
 
-function Toolbar({ children }: { children: ReactNode }) {
-  return <div className="flex gap-2 py-2 px-3">{children}</div>;
+function Toolbar({ children }: { children?: ReactNode }) {
+  return (
+    <div className="flex gap-3 py-2 px-3 bg-stone-100 h-10">{children}</div>
+  );
 }
 
 function PropertyBag({ object }: { object: Record<string, string> }) {
@@ -215,7 +220,7 @@ function DocumentIr({ document: fragments }: { document: doc.Fragment[] }) {
         let colors;
         switch (type) {
           case "text":
-            colors = ["text-neutral-900", "bg-neutral-100"];
+            colors = ["text-neutral-900", "bg-stone-100"];
             break;
           case "image":
             colors = ["text-yellow-900", "bg-yellow-100"];
@@ -329,7 +334,7 @@ export function Inspector({
 
   return (
     <div className="border border-solid border-neutral-300 rounded overflow-hidden">
-      <div className="bg-neutral-100 border-b border-neutral-200">
+      <div className="bg-stone-100 border-b border-stone-200">
         <Toolbar>
           <EmojiButton emoji="🏠" onAction={() => setUrl(home)} />
           <UrlInput value={url} onChange={setUrl} />
@@ -375,21 +380,6 @@ export function Inspector({
   );
 }
 
-// Function to extract URLs from markdown image syntax
-function extractImageUrlsFromMarkdown(text: string): Set<string> {
-  const regex = /!\[.*?\]\((.*?)\)/g;
-  const urls: string[] = [];
-  let match;
-
-  while ((match = regex.exec(text)) !== null) {
-    if (match[1] && match[1].trim()) {
-      urls.push(match[1].trim());
-    }
-  }
-
-  return new Set(urls);
-}
-
 const queryClient = new QueryClient();
 
 const EXAMPLE = `It is currently ![](https://chrislloyd.net/utc.md).
@@ -397,30 +387,58 @@ const EXAMPLE = `It is currently ![](https://chrislloyd.net/utc.md).
 What time is it in Sydney? Time only.
 `;
 
+function Output({ promise }: { promise: Promise<string[]> }) {
+  const output = use(promise);
+  return <div>{output.join("")}</div>;
+}
+
 function App() {
   const [text, setText] = useState("");
-  const urls = extractImageUrlsFromMarkdown(text);
+  const [promise, setPromise] = useState<Promise<string[]> | null>(null);
+  const model = useModel();
+  const handleRun = useCallback(() => {
+    const abortController = new AbortController();
+    const doc: doc.ModelDocument = {
+      body: [
+        {
+          type: "blob",
+          blob: new Blob([text], { type: "text/plain;charset=utf-8" }),
+        },
+      ],
+    };
+    setPromise(Array.fromAsync(model.stream(doc, abortController.signal)));
+  }, [text, setPromise]);
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="container mx-auto p-10">
-        <button onClick={() => setText(EXAMPLE)}>Example</button>
-        <textarea
-          className="w-full border p-2 font-mono"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={5}
-        />
-        {Array.from(urls).map((url) => (
-          <Inspector key={url} home={url} />
-        ))}
+    <div className="p-6">
+      <Toolbar>
+        <button onClick={() => setText(EXAMPLE)}>Load example</button>
+        <button onClick={() => handleRun()}>Run</button>
+      </Toolbar>
+      <div className="grid grid-cols-2">
+        <div className="h-full">
+          <textarea
+            className="w-full border px-3 py-2 font-mono h-full"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={5}
+          />
+        </div>
+
+        <div className="px-3 py-2">
+          {promise && <Output promise={promise} />}
+        </div>
       </div>
-    </QueryClientProvider>
+    </div>
   );
 }
 
 const root = createRoot(document.getElementById("root")!);
 root.render(
   <StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <ModelProvider>
+        <App />
+      </ModelProvider>
+    </QueryClientProvider>
   </StrictMode>,
 );

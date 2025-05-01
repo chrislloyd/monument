@@ -15,7 +15,7 @@ export class OpenAiModel implements Model {
     private readonly model: OpenAI.ChatModel,
     readonly apiKey: string,
   ) {
-    this.#client = new OpenAI({ apiKey });
+    this.#client = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
   }
 
   async *stream(
