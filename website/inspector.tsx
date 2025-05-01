@@ -20,6 +20,9 @@ import { createRoot } from "react-dom/client";
 import { parseHtml } from "../src/html";
 import * as doc from "../src/document";
 import { ModelProvider, useModel } from "./model";
+import { MonotonicClock } from "../src/clock";
+import { MemoryStorage } from "../src/storage";
+import { Run, Status, type Action } from "../src/build";
 
 type Value = {
   id: string;
@@ -406,7 +409,19 @@ function App() {
         },
       ],
     };
-    setPromise(Array.fromAsync(model.stream(doc, abortController.signal)));
+
+    const clock = new MonotonicClock(Date.now());
+    const action: Action = async () => {
+      return Array.fromAsync(model.stream(doc, abortController.signal));
+    };
+    const storage = new MemoryStorage<Status>();
+    const run = new Run(clock, action, storage, abortController.signal);
+    const url = new URL(window.location.href);
+    setPromise(
+      run.need(url).then((thing) => {
+        return thing as string[];
+      }),
+    );
   }, [text, setPromise]);
   return (
     <div className="p-6">
