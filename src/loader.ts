@@ -18,6 +18,16 @@ export class Loader implements Loader {
   }
 }
 
+export class BunLoader implements Loader {
+  constructor(private loader: Loader) {}
+  async load(url: URL, signal: AbortSignal): Promise<Blob> {
+    if (url.protocol === "file:") {
+      return file(url);
+    }
+    return this.loader.load(url, signal);
+  }
+}
+
 async function file(url: URL): Promise<Blob> {
   assert.equal(url.protocol, "file:");
   const f = Bun.file(url);

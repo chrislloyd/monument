@@ -4,6 +4,10 @@ import { markdown } from "./markdown";
 
 export async function parse(blob: Blob): Promise<HyperModelDocument["body"]> {
   switch (blob.type) {
+    case "text/plain;charset=utf-8": {
+      const text = await blob.text();
+      return parseText(text);
+    }
     case "text/html": {
       const text = await blob.text();
       return parseHtml(text);
@@ -13,8 +17,14 @@ export async function parse(blob: Blob): Promise<HyperModelDocument["body"]> {
       return parseMarkdown(text);
     }
     default:
-      throw new Error(`Unsupported content type: ${blob.type}`);
+      throw new Error(`Cannot parse content type: ${blob.type}`);
   }
+}
+
+export async function parseText(
+  text: string,
+): Promise<HyperModelDocument["body"]> {
+  return [{ type: "text", text }];
 }
 
 export function parseHtml(html: string): HyperModelDocument["body"] {

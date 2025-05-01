@@ -1,7 +1,7 @@
 import { Run, type Status } from "../src/build";
 import { MonotonicClock } from "../src/clock";
 import { parse } from "../src/html";
-import { Loader } from "../src/loader";
+import { BunLoader, Loader } from "../src/loader";
 import { OpenAiModel } from "../src/model";
 import { Resolver } from "../src/resolver";
 import { RuleSet } from "../src/rule";
@@ -10,7 +10,7 @@ import { FileStorage } from "../src/storage";
 async function main(argv: string[]) {
   const abortController = new AbortController();
   const clock = new MonotonicClock(Date.now());
-  const loader = new Loader();
+  const loader = new BunLoader(new Loader());
   const ruleset = new RuleSet();
 
   // out/*.md -> out/*.hmd

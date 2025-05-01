@@ -37,7 +37,9 @@ export class Resolver implements Resolver {
             return [
               {
                 type: "blob",
-                blob: new Blob([fragment.text], { type: "text/plain" }),
+                blob: new Blob([fragment.text], {
+                  type: "text/plain;charset=utf-8",
+                }),
               },
             ];
 

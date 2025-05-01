@@ -39,9 +39,7 @@ export class OpenAiModel implements Model {
               content = [contentPart];
               break;
             default:
-              throw new Error(
-                `OpenAI Error: Unsupported blob type: ${fragment.blob.type}`,
-              );
+              throw new Error(`Unsupported blob type: ${fragment.blob.type}`);
           }
           messages.push({ role: "user", content });
           break;

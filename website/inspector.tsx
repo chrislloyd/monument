@@ -9,6 +9,7 @@ import {
 import {
   Fragment,
   StrictMode,
+  Suspense,
   use,
   useCallback,
   useEffect,
@@ -17,10 +18,13 @@ import {
   type ReactNode,
 } from "react";
 import { createRoot } from "react-dom/client";
-import { Action, Run, type Status } from "../src/build";
+import { ErrorBoundary } from "react-error-boundary";
+import { Run, type Action, type Status } from "../src/build";
 import { MonotonicClock } from "../src/clock";
 import * as doc from "../src/document";
-import { parseHtml } from "../src/html";
+import { parse, parseHtml } from "../src/html";
+import { Loader } from "../src/loader";
+import { Resolver } from "../src/resolver";
 import { MemoryStorage } from "../src/storage";
 import { ModelProvider, useModel } from "./model";
 
@@ -395,24 +399,42 @@ function Output({ promise }: { promise: Promise<string[]> }) {
   return <div>{output.join("")}</div>;
 }
 
+function ErrorFallback({ error }: { error: Error }) {
+  return (
+    <div className="text-red-500">
+      <div className="font-bold">{error.name}:</div>
+      {error.message}
+    </div>
+  );
+}
+
 function App() {
   const abortController = useRef(new AbortController());
   const clock = useRef(new MonotonicClock(0));
+  const loader = useRef(new Loader());
   const [text, setText] = useState("");
   const [promise, setPromise] = useState<Promise<string[]> | null>(null);
   const model = useModel();
 
-  const action = useCallback<Action>(() => {
-    const doc: doc.ModelDocument = {
-      body: [
-        {
-          type: "blob",
-          blob: new Blob([text], { type: "text/plain;charset=utf-8" }),
-        },
-      ],
-    };
-    return Array.fromAsync(model.stream(doc, abortController.current.signal));
-  }, [text, abortController]);
+  const url = new URL(window.location.href);
+
+  const action = useCallback<Action>(
+    async (ctx) => {
+      let blob: Blob;
+      if (url.href === ctx.out.href) {
+        blob = new Blob([text], { type: "text/markdown" });
+      } else {
+        blob = await loader.current.load(ctx.out, ctx.signal);
+      }
+
+      const body = await parse(blob);
+      const hmd = { url: url.href, body };
+      const resolver = new Resolver(loader.current, ctx.need);
+      const mc = await resolver.resolve(hmd, ctx.signal);
+      return await Array.fromAsync(model.stream(mc, ctx.signal));
+    },
+    [text, abortController],
+  );
 
   const handleRun = useCallback(() => {
     const storage = new MemoryStorage<Status>();
@@ -422,7 +444,6 @@ function App() {
       storage,
       abortController.current.signal,
     );
-    const url = new URL(window.location.href);
     setPromise(
       run.need(url).then((thing) => {
         clock.current.tick();
@@ -430,6 +451,7 @@ function App() {
       }),
     );
   }, [clock, action, setPromise]);
+
   return (
     <div className="p-6">
       <Toolbar>
@@ -440,7 +462,7 @@ function App() {
       <div className="grid grid-cols-2">
         <div className="h-full">
           <textarea
-            className="w-full border px-3 py-2 font-mono h-full"
+            className="w-full border px-3 py-2 h-full"
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={5}
@@ -448,7 +470,13 @@ function App() {
         </div>
 
         <div className="px-3 py-2">
-          {promise && <Output promise={promise} />}
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <Suspense
+              fallback={<div className="text-stone-500">Thinking...</div>}
+            >
+              {promise && <Output promise={promise} />}
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </div>
     </div>

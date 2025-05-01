@@ -28,6 +28,7 @@
     "parse5": "^7.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-error-boundary": "^5.0.0",
     "signal-polyfill": "^0.2.2",
     "signal-utils": "^0.21.1"
   }
