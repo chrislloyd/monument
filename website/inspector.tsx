@@ -455,6 +455,13 @@ function App() {
   return (
     <div className="p-6">
       <Toolbar>
+        <h1 className="monument">
+          <span role="img" aria-label="desert">
+            🏜️
+          </span>{" "}
+          Monument
+        </h1>
+
         <button onClick={() => setText(EXAMPLE)}>Load example</button>
         <button onClick={() => handleRun()}>Run</button>
         <div>t = {clock.current.now()}</div>
