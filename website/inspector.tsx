@@ -198,7 +198,9 @@ function History({ history }: { history: Value[] }) {
 
 function Toolbar({ children }: { children?: ReactNode }) {
   return (
-    <div className="flex gap-3 py-2 px-3 bg-stone-100 h-10">{children}</div>
+    <div className="flex items-center gap-3 py-2 px-3 bg-stone-100">
+      {children}
+    </div>
   );
 }
 
@@ -396,7 +398,14 @@ What time is it in Sydney? Time only.
 
 function Output({ promise }: { promise: Promise<string[]> }) {
   const output = use(promise);
-  return <div>{output.join("")}</div>;
+  return (
+    <>
+      <Identifier id={2} />
+      <div className="border border-green-500 text-green-500 px-3 py-2">
+        {output.join("")}
+      </div>
+    </>
+  );
 }
 
 function ErrorFallback({ error }: { error: Error }) {
@@ -408,11 +417,32 @@ function ErrorFallback({ error }: { error: Error }) {
   );
 }
 
+function Button({
+  action,
+  children,
+}: {
+  action: () => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <button
+      className="shadow-sm hover:shadow-md bg-white text-xs py-1 px-2  cursor-pointer active:bg-stone-900 active:text-white rounded-sm"
+      onClick={() => action()}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Identifier({ id }) {
+  return <div className="text-stone-500 text-xs font-mono">[[{id}]]</div>;
+}
+
 function App() {
   const abortController = useRef(new AbortController());
   const clock = useRef(new MonotonicClock(0));
   const loader = useRef(new Loader());
-  const [text, setText] = useState("");
+  const [text, setText] = useState(EXAMPLE);
   const [promise, setPromise] = useState<Promise<string[]> | null>(null);
   const model = useModel();
 
@@ -462,12 +492,13 @@ function App() {
           Monument
         </h1>
 
-        <button onClick={() => setText(EXAMPLE)}>Load example</button>
-        <button onClick={() => handleRun()}>Run</button>
+        <Button action={() => setText(EXAMPLE)}>Reset</Button>
+        <Button action={() => handleRun()}>Run</Button>
         <div>t = {clock.current.now()}</div>
       </Toolbar>
-      <div className="grid grid-cols-2">
+      <div className="">
         <div className="h-full">
+          <Identifier id={1} />
           <textarea
             className="w-full border px-3 py-2 h-full"
             value={text}
@@ -476,7 +507,7 @@ function App() {
           />
         </div>
 
-        <div className="px-3 py-2">
+        <div>
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <Suspense
               fallback={<div className="text-stone-500">Thinking...</div>}
