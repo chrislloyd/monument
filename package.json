@@ -21,6 +21,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.53.0",
     "@tanstack/react-query": "^5.71.10",
     "glob": "^11.0.1",
     "marked": "^15.0.7",

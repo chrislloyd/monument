@@ -2,7 +2,7 @@ import { Run, type Status } from "../src/build";
 import { MonotonicClock } from "../src/clock";
 import { parse } from "../src/html";
 import { BunLoader, Loader } from "../src/loader";
-import { OpenAiModel } from "../src/model";
+import { AnthropicModel } from "../src/model";
 import { Resolver } from "../src/resolver";
 import { RuleSet } from "../src/rule";
 import { FileStorage } from "../src/storage";
@@ -25,7 +25,7 @@ async function main(argv: string[]) {
     const hmd = { url: inputUrl.href, body };
     const resolver = new Resolver(loader, context.need);
     const mc = await resolver.resolve(hmd, context.signal);
-    const model = new OpenAiModel("gpt-4o-mini", Bun.env["OPENAI_API_KEY"]!);
+    const model = new AnthropicModel("claude-3-5-sonnet-20241022", Bun.env["ANTHROPIC_API_KEY"]!);
     const chunks = await Array.fromAsync(model.stream(mc, context.signal));
 
     await Bun.write(context.out, chunks.join(""));

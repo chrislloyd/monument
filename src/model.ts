@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { type ModelDocument } from "./document";
 import { dataUrlFromBlob } from "./url";
 
@@ -8,62 +8,68 @@ export interface Model {
 
 // ---
 
-export class OpenAiModel implements Model {
-  #client: OpenAI;
+export class AnthropicModel implements Model {
+  #client: Anthropic;
 
   constructor(
-    private readonly model: OpenAI.ChatModel,
+    private readonly model: string,
     readonly apiKey: string,
   ) {
-    this.#client = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+    this.#client = new Anthropic({ apiKey });
   }
 
   async *stream(
     document: ModelDocument,
     signal: AbortSignal,
   ): AsyncGenerator<string> {
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
-    const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [];
+    const messages: Anthropic.MessageParam[] = [];
+    const messageContent: (Anthropic.TextBlockParam | Anthropic.ImageBlockParam)[] = [];
+    
     for (const fragment of document.body) {
       switch (fragment.type) {
         case "blob": {
-          let content;
           switch (fragment.blob.type) {
             case "text/plain;charset=utf-8":
-              content = await fragment.blob.text();
+              const text = await fragment.blob.text();
+              messageContent.push({ type: "text", text });
               break;
             case "image/jpeg":
-              const imageUrl = await dataUrlFromBlob(fragment.blob);
-              const contentPart: OpenAI.Chat.Completions.ChatCompletionContentPartImage =
-                { type: "image_url", image_url: { url: imageUrl } };
-              content = [contentPart];
+              const imageData = await fragment.blob.arrayBuffer();
+              const base64 = Buffer.from(imageData).toString('base64');
+              messageContent.push({
+                type: "image",
+                source: {
+                  type: "base64",
+                  media_type: "image/jpeg",
+                  data: base64
+                }
+              });
               break;
             default:
               throw new Error(`Unsupported blob type: ${fragment.blob.type}`);
           }
-          messages.push({ role: "user", content });
           break;
         }
         case "action":
           break;
       }
     }
-    const response = await this.#client.chat.completions.create(
-      {
-        model: this.model,
-        messages,
-        stream: true,
-        // OpenAI defaults to picking a tool even if none are supplied
-        tools: tools.length > 0 ? tools : undefined,
-      },
-      { signal },
-    );
-    for await (const chunk of response) {
-      const content = chunk.choices[0]?.delta.content;
-      if (!content) {
-        continue;
+    
+    if (messageContent.length > 0) {
+      messages.push({ role: "user", content: messageContent });
+    }
+    
+    const stream = await this.#client.messages.create({
+      model: this.model,
+      messages,
+      stream: true,
+      max_tokens: 4096,
+    }, { signal });
+    
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+        yield chunk.delta.text;
       }
-      yield content;
     }
   }
 }

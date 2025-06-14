@@ -62,7 +62,7 @@
 
 What makes a "programming environment"? It goes beyond tools like [VSCode](https://code.visualstudio.com). It draws inspiration from [LISP machines](https://en.wikipedia.org/wiki/Lisp_machine), the [Canon Cat](https://en.wikipedia.org/wiki/Canon_Cat), [Hypercard](https://hypercard.org), and [Dynamicland](https://dynamicland.org/2024/FAQ/#What_do_you_mean_by_dynamic_medium). A programming environment unifies program editing and execution, creating a live, malleable system.
 
-**Monument** takes the first step toward this vision by reactively processing documents through an LLM. Documents connect through transclusion to form large, dynamic knowledge graphs. You can reuse and abstract programs through transclusion. Like a spreadsheet, the reactive document system maintains efficiency and stays current.
+**Monument** takes the first step toward this vision by reactively processing documents through Claude (Anthropic's LLM). Documents connect through transclusion to form large, dynamic knowledge graphs. You can reuse and abstract programs through transclusion. Like a spreadsheet, the reactive document system maintains efficiency and stays current.
 
 I welcome you to learn from both the successes and challenges of this project. Please be kind ✌️
 
@@ -90,7 +90,7 @@ The weather today is 19c.
 
 4. Efficiency. A key principle to **Monument** is _live-ness_. As you make changes, results should be reflected immediately. That means lots of calls to models. There exists opportunites to optimize this, but for as long as this remains a research prototype it'll cost quite a bit of energy/money.
 
-5. Privacy. I'm using remote models, specifically OpenAI.  because they are really high-quality, fast and it's relatively easy. This means all your data is transmitted to OpenAI. This isn't ideal, but the engineering work making local models work reliably feels significant but mechanistic. There isn't much to learn by changing this but is a requirement that will obviously change as this gets closer to shipping.
+5. Privacy. I'm using remote models, specifically Anthropic's Claude, because they are really high-quality, fast and it's relatively easy. This means all your data is transmitted to Anthropic. This isn't ideal, but the engineering work making local models work reliably feels significant but mechanistic. There isn't much to learn by changing this but is a requirement that will obviously change as this gets closer to shipping.
 
 ## Usage
 
