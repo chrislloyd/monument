@@ -16,7 +16,7 @@ describe("Run", () => {
 
     expect(result).toBe("hello world");
 
-    const status = await db.get(new URL("file:///test"));
+    const status = await db.get("file:///test");
     expect(status?.type).toBe(StatusType.READY);
     if (status?.type === StatusType.READY) {
       expect(status.result.value).toBe("hello world");
@@ -41,7 +41,7 @@ describe("Run", () => {
       "build failed",
     );
 
-    const status = await db.get(new URL("file:///test"));
+    const status = await db.get("file:///test");
     expect(status?.type).toBe(StatusType.FAILED);
     expect(status?.error.message).toEqual("build failed");
   });
@@ -52,7 +52,7 @@ describe("Run", () => {
     const controller = new AbortController();
 
     // Store a test dependency
-    await db.put(new URL("file:///dep"), {
+    await db.put("file:///dep", {
       type: StatusType.READY,
       result: {
         value: "dependency",
@@ -83,7 +83,7 @@ describe("Run", () => {
     expect(result2).toBe("result");
     expect(needCalled).toBe(1); // Action should not have been called again
 
-    const status = await db.get(new URL("file:///test"));
+    const status = await db.get("file:///test");
     expect(status?.type).toBe(StatusType.READY);
   });
 
@@ -93,7 +93,7 @@ describe("Run", () => {
     const controller = new AbortController();
 
     // Store a test dependency
-    await db.put(new URL("file:///dep"), {
+    await db.put("file:///dep", {
       type: StatusType.READY,
       result: {
         value: "dependency",
@@ -117,7 +117,7 @@ describe("Run", () => {
 
     // Update the dependency
     clock.advance(1);
-    await db.put(new URL("file:///dep"), {
+    await db.put("file:///dep", {
       type: StatusType.READY,
       result: {
         value: "updated dependency",
