@@ -31,7 +31,7 @@ export function equal<T>(
   expected: T,
   message?: string,
 ): asserts actual is T {
-  if (Object.is(actual, expected)) {
+  if (!Object.is(actual, expected)) {
     throw new AssertionError(
       message ?? `Expected ${actual} to equal ${expected}`,
       actual,

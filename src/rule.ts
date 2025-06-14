@@ -17,7 +17,7 @@ export class RuleSet {
       async fn(context) {
         await action(context);
 
-        const file = Bun.file(context.out);
+        const file = Bun.file(context.out.pathname);
         if (!(await file.exists())) {
           throw new Error(`Rule did not create file "${context.out}"`);
         }

@@ -3,8 +3,10 @@ import { type HyperFragment, type HyperModelDocument } from "./document";
 import { markdown } from "./markdown";
 
 export async function parse(blob: Blob): Promise<HyperModelDocument["body"]> {
-  switch (blob.type) {
-    case "text/plain;charset=utf-8": {
+  const contentType = blob.type.split(";")[0]; // Remove charset and other parameters
+  
+  switch (contentType) {
+    case "text/plain": {
       const text = await blob.text();
       return parseText(text);
     }
@@ -78,6 +80,19 @@ function process(
 
     case "li": {
       return [];
+    }
+
+    case "h1":
+    case "h2":
+    case "h3":
+    case "h4":
+    case "h5":
+    case "h6": {
+      return [
+        { type: "text", text: "\n\n" },
+        ...traverse(element.childNodes),
+        { type: "text", text: "\n\n" },
+      ];
     }
 
     case "iframe": {

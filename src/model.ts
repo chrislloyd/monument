@@ -73,3 +73,22 @@ export class AnthropicModel implements Model {
     }
   }
 }
+
+// ---
+
+export class NoopModel implements Model {
+  async *stream(
+    document: ModelDocument,
+    signal: AbortSignal,
+  ): AsyncGenerator<string> {
+    // Simply concatenate all text content from the document
+    for (const fragment of document.body) {
+      if (fragment.type === "blob") {
+        const contentType = fragment.blob.type.split(";")[0];
+        if (contentType === "text/plain" || contentType === "text/html" || contentType === "text/markdown") {
+          yield await fragment.blob.text();
+        }
+      }
+    }
+  }
+}

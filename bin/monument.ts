@@ -2,7 +2,7 @@ import { Run, type Status } from "../src/build";
 import { MonotonicClock } from "../src/clock";
 import { parse } from "../src/html";
 import { BunLoader, Loader } from "../src/loader";
-import { AnthropicModel } from "../src/model";
+import { AnthropicModel, NoopModel } from "../src/model";
 import { Resolver } from "../src/resolver";
 import { RuleSet } from "../src/rule";
 import { FileStorage } from "../src/storage";
@@ -25,10 +25,27 @@ async function main(argv: string[]) {
     const hmd = { url: inputUrl.href, body };
     const resolver = new Resolver(loader, context.need);
     const mc = await resolver.resolve(hmd, context.signal);
-    const model = new AnthropicModel("claude-3-5-sonnet-20241022", Bun.env["ANTHROPIC_API_KEY"]!);
+    
+    // Use NoopModel for testing
+    const model = new NoopModel();
+    // const apiKey = Bun.env["ANTHROPIC_API_KEY"];
+    // const model = apiKey 
+    //   ? new AnthropicModel("claude-3-5-sonnet-20241022", apiKey)
+    //   : new NoopModel();
+    
     const chunks = await Array.fromAsync(model.stream(mc, context.signal));
 
-    await Bun.write(context.out, chunks.join(""));
+    await Bun.write(context.out.pathname, chunks.join(""));
+  });
+
+  // Handle HTTP/HTTPS URLs
+  ruleset.rule({
+    predicate: (url) => url.protocol === "http:" || url.protocol === "https:",
+    async fn(context) {
+      // For HTTP URLs, we don't need to do anything - the loader will fetch them
+      // and return the content as-is
+      return JSON.stringify({ type: "http-resource" });
+    },
   });
 
   ruleset.file("**", async () => {});
