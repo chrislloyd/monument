@@ -1,8 +1,8 @@
-import { type Clock } from "./clock";
+import { type Clock, type Instant } from "./clock";
 import { type Storage } from "./storage";
 
 // A monotonically increasing identifier for each build run
-type RunId = ReturnType<Clock["now"]>;
+type RunId = Instant;
 
 type Id = string;
 
@@ -12,8 +12,8 @@ type Value = unknown;
 // changed help to determine if the result is still valid.
 type Result = {
   value: Value; // This has to be runtime typechecked and serializable.
-  built: number;
-  changed: number;
+  built: Instant;
+  changed: Instant;
   depends: Id[][];
 };
 
@@ -191,7 +191,7 @@ export class Run {
     );
     return depStatuses.every(
       (depStatus) =>
-        depStatus && status.result.changed >= depStatus.result.built,
+        depStatus && status.result.changed.epochMilliseconds >= depStatus.result.built.epochMilliseconds,
     );
   }
 }

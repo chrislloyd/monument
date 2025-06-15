@@ -1,18 +1,22 @@
+export class Instant {
+  constructor(public epochMilliseconds: number) {}
+}
+
 export interface Clock {
-  now(): number;
+  now(): Instant;
 }
 
 export class SystemClock implements Clock {
-  now(): number {
-    return Date.now();
+  now(): Instant {
+    return new Instant(Date.now());
   }
 }
 
 export class MonotonicClock implements Clock {
   constructor(private t: number = 0) {}
 
-  now(): number {
-    return this.t;
+  now(): Instant {
+    return new Instant(this.t);
   }
 
   advance(n: number) {

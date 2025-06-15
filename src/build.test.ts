@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { MonotonicClock } from "./clock";
+import { MonotonicClock, Instant } from "./clock";
 import { MemoryStorage } from "./storage";
 import { Run, StatusType, type Status, type Action } from "./build";
 
@@ -20,8 +20,8 @@ describe("Run", () => {
     expect(status?.type).toBe(StatusType.READY);
     if (status?.type === StatusType.READY) {
       expect(status.result.value).toBe("hello world");
-      expect(status.result.built).toBe(1);
-      expect(status.result.changed).toBe(1);
+      expect(status.result.built.epochMilliseconds).toBe(1);
+      expect(status.result.changed.epochMilliseconds).toBe(1);
       expect(status.result.depends).toEqual([]);
     }
   });
@@ -43,7 +43,9 @@ describe("Run", () => {
 
     const status = await db.get("file:///test");
     expect(status?.type).toBe(StatusType.FAILED);
-    expect(status?.error.message).toEqual("build failed");
+    if (status?.type === StatusType.FAILED) {
+      expect(status.error.message).toEqual("build failed");
+    }
   });
 
   test("reuses cached value when dependencies haven't changed", async () => {
@@ -56,8 +58,8 @@ describe("Run", () => {
       type: StatusType.READY,
       result: {
         value: "dependency",
-        built: 1,
-        changed: 1,
+        built: new Instant(1),
+        changed: new Instant(1),
         depends: [],
       },
     });
@@ -97,8 +99,8 @@ describe("Run", () => {
       type: StatusType.READY,
       result: {
         value: "dependency",
-        built: 1,
-        changed: 1,
+        built: new Instant(1),
+        changed: new Instant(1),
         depends: [],
       },
     });
@@ -121,8 +123,8 @@ describe("Run", () => {
       type: StatusType.READY,
       result: {
         value: "updated dependency",
-        built: 2,
-        changed: 2,
+        built: new Instant(2),
+        changed: new Instant(2),
         depends: [],
       },
     });

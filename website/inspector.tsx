@@ -494,7 +494,7 @@ function App() {
 
         <Button action={() => setText(EXAMPLE)}>Reset</Button>
         <Button action={() => handleRun()}>Run</Button>
-        <div>t = {clock.current.now()}</div>
+        <div>t = {clock.current.now().epochMilliseconds}</div>
       </Toolbar>
       <div className="">
         <div className="h-full">
